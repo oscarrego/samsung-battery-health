@@ -811,6 +811,69 @@
     }
     .toast.show { opacity: 1; }
 
+    /* Bottom Navigation Bar (YouTube Music / Android Navigation style) */
+    .bottom-nav {
+      width: 100%;
+      background: #0C0C0E;
+      border-top: 1px solid #1E1E24;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 6px 12px 6px;
+      box-sizing: border-box;
+      margin-top: auto;
+    }
+    .nav-item {
+      background: transparent;
+      border: 1px solid transparent;
+      outline: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background .15s ease, border-color .15s ease;
+      flex: 1;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.04);
+    }
+    .nav-item:active {
+      background: rgba(255,255,255,0.08);
+    }
+    .nav-item-primary {
+      background: #152219;
+      border-color: rgba(0, 230, 118, 0.35);
+      color: var(--accent-green);
+      flex: 1.35;
+    }
+    .nav-item-primary:hover {
+      background: #1a2a1f;
+    }
+    .nav-item-primary:active {
+      background: #1f3325;
+    }
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .nav-item-primary .nav-label {
+      font-weight: 700;
+    }
+
     /* Home bar */
     .home-indicator {
       display: flex;
@@ -857,12 +920,10 @@
       <div class="screen-view active-view" id="viewMain">
         <!-- Header -->
         <div class="app-header">
-          <div class="header-icon-btn">≡</div>
           <div class="header-center">
             <span class="header-title">My Battery</span>
             <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago · Installed 15/5/2018</span>
           </div>
-          <div class="header-icon-btn">ⓘ</div>
         </div>
 
         <div class="content">
@@ -942,9 +1003,6 @@
             <span id="btnDetailsLabel">View battery details</span>
             <span style="font-size:17px;color:#8E8E93;">›</span>
           </button>
-
-          <!-- Run Dumpstate Button -->
-          <button class="btn-run">Run Dumpstate</button>
 
           <!-- Collapsible Setup Guide -->
           <div class="card setup-card">
@@ -1307,6 +1365,34 @@
             <button class="btn-modal-skip" id="btnModalSkip">Skip</button>
           </div>
         </div>
+      </div>
+
+      <!-- Bottom Navigation Bar (like YouTube Music / Android Navigation) -->
+      <div class="bottom-nav" id="bottomNav">
+        <button class="nav-item" id="navBtnLogs" title="Browse Logs">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="18" x2="20" y2="18"/>
+          </svg>
+          <span class="nav-label">Logs</span>
+        </button>
+
+        <button class="nav-item nav-item-primary" id="navBtnDiag" title="Run SysDump Diagnostics">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5.14 C8 4.35 8.87 3.87 9.54 4.29 L19.04 10.29 C19.67 10.69 19.67 11.61 19.04 12.01 L9.54 18.01 C8.87 18.43 8 17.95 8 17.16 Z"/>
+          </svg>
+          <span class="nav-label">Run Diagnostics</span>
+        </button>
+
+        <button class="nav-item" id="navBtnGuide" title="Setup Guide">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="7.75" r="0.8" fill="currentColor"/>
+            <line x1="12" y1="11" x2="12" y2="16"/>
+          </svg>
+          <span class="nav-label">Guide</span>
+        </button>
       </div>
 
       <!-- Home bar indicator -->

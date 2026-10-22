@@ -174,105 +174,71 @@ private fun BatteryDashboard(
             ) {
                 Spacer(Modifier.height(52.dp))
 
-                // ── Header row ────────────────────────────────────────────────
-                Box(
+                // ── Header: title + metadata only (buttons moved to bottom nav) ─
+                Column(
                     Modifier
                         .fillMaxWidth()
                         .alpha(headerAlpha)
-                        .offset(y = headerSlide.dp)
+                        .offset(y = headerSlide.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    FilledTonalIconButton(
-                        onClick  = { if (!isLoadingDetail) viewModel.openLogSheet() },
-                        enabled  = !isLoadingDetail,
-                        modifier = Modifier.align(Alignment.CenterStart).size(40.dp),
-                        colors   = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            contentColor   = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.arrow_back), "Browse logs",
-                            modifier = Modifier.size(20.dp).rotate(-90f)
-                        )
-                    }
-
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "My Battery", color = tp,
-                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        if (isLoadingDetail) {
-                            Text("…", color = muted.copy(alpha = 0.5f),
-                                style = MaterialTheme.typography.labelSmall)
-                            Text("…", color = muted.copy(alpha = 0.4f),
-                                style = MaterialTheme.typography.labelSmall)
-                            Spacer(Modifier.height(2.dp))
-                            Text("…", color = muted.copy(alpha = 0.3f),
-                                style = MaterialTheme.typography.labelSmall)
-                        } else {
-                            if (effectiveInfo.logFileName.isNotEmpty()) {
-                                val displayName = BatteryParser.truncateLogDisplayName(effectiveInfo.logFileName)
-                                Row(
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment     = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        displayName, color = muted, textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                    if (!folderAccessible) {
-                                        Spacer(Modifier.width(4.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(3.dp),
-                                            color = MaterialTheme.colorScheme.surfaceContainerHighest
-                                        ) {
-                                            Text(
-                                                "cached",
-                                                modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-                                                color    = muted.copy(alpha = 0.7f),
-                                                style    = MaterialTheme.typography.labelSmall.copy(
-                                                    fontSize = 8.sp,
-                                                    letterSpacing = 0.sp
-                                                )
+                    Text(
+                        "My Battery", color = tp,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    if (isLoadingDetail) {
+                        Text("…", color = muted.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.labelSmall)
+                        Text("…", color = muted.copy(alpha = 0.4f),
+                            style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(2.dp))
+                        Text("…", color = muted.copy(alpha = 0.3f),
+                            style = MaterialTheme.typography.labelSmall)
+                    } else {
+                        if (effectiveInfo.logFileName.isNotEmpty()) {
+                            val displayName = BatteryParser.truncateLogDisplayName(effectiveInfo.logFileName)
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment     = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    displayName, color = muted, textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                if (!folderAccessible) {
+                                    Spacer(Modifier.width(4.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(3.dp),
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest
+                                    ) {
+                                        Text(
+                                            "cached",
+                                            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                                            color    = muted.copy(alpha = 0.7f),
+                                            style    = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 8.sp,
+                                                letterSpacing = 0.sp
                                             )
-                                        }
+                                        )
                                     }
                                 }
                             }
-                            if (effectiveInfo.relativeDate.isNotEmpty())
-                                Text(
-                                    "Log created ${effectiveInfo.relativeDate}",
-                                    color = muted, textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            if (effectiveInfo.batteryDateFormatted.isNotEmpty()) {
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    "Installed on ${effectiveInfo.batteryDateFormatted}",
-                                    color = muted.copy(alpha = 0.7f), textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
                         }
-                    }
-
-                    FilledTonalIconButton(
-                        onClick  = { if (!isLoadingDetail) onNavigateSetup() },
-                        enabled  = !isLoadingDetail,
-                        modifier = Modifier.align(Alignment.CenterEnd).size(40.dp),
-                        colors   = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            contentColor   = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Icon(painterResource(R.drawable.info), "How to update log",
-                            modifier = Modifier.size(18.dp))
+                        if (effectiveInfo.relativeDate.isNotEmpty())
+                            Text(
+                                "Log created ${effectiveInfo.relativeDate}",
+                                color = muted, textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        if (effectiveInfo.batteryDateFormatted.isNotEmpty()) {
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                "Installed on ${effectiveInfo.batteryDateFormatted}",
+                                color = muted.copy(alpha = 0.7f), textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
 
@@ -295,8 +261,6 @@ private fun BatteryDashboard(
                             isConciseOnly = effectiveInfo.isConciseOnly,
                             onClick = onNavigateDetails
                         )
-                        Spacer(Modifier.height(12.dp))
-                        OneTapDumpstateButton(onRunDumpstate = onRunDumpstate)
                         Spacer(Modifier.height(6.dp))
                         Text(
                             "v${BuildConfig.VERSION_NAME}",
@@ -305,9 +269,19 @@ private fun BatteryDashboard(
                         )
                     }
                 }
-                Spacer(Modifier.height(32.dp))
+                // Extra bottom padding so content clears the bottom nav bar
+                Spacer(Modifier.height(96.dp))
             }
         }
+
+        // ── Bottom navigation bar ──────────────────────────────────────────────
+        BottomNavBar(
+            modifier            = Modifier.align(Alignment.BottomCenter),
+            isLoadingDetail     = isLoadingDetail,
+            onOpenLogs          = { if (!isLoadingDetail) viewModel.openLogSheet() },
+            onRunDiagnostics    = onRunDumpstate,
+            onOpenGuide         = { if (!isLoadingDetail) onNavigateSetup() }
+        )
 
         // Interaction-blocking overlay while loading detail, with skip controls on top
         if (isLoadingDetail) {
@@ -498,29 +472,110 @@ private fun BatteryDashboard(
     }
 }
 
-// ── One-Tap Dumpstate button ──────────────────────────────────────────────────
+// ── Bottom navigation bar ──────────────────────────────────────────────────────
 
-/**
- * Simple one-tap button that dials *#9900# to open Samsung's SysDump menu.
- */
 @Composable
-private fun OneTapDumpstateButton(onRunDumpstate: () -> Unit) {
-    Button(
-        onClick   = onRunDumpstate,
-        modifier  = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape     = RoundedCornerShape(14.dp),
-        colors    = ButtonDefaults.buttonColors(
-            containerColor = Color.White,
-            contentColor   = Color.Black
-        ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+private fun BottomNavBar(
+    modifier: Modifier = Modifier,
+    isLoadingDetail: Boolean,
+    onOpenLogs: () -> Unit,
+    onRunDiagnostics: () -> Unit,
+    onOpenGuide: () -> Unit
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = Color(0xFF0C0C0E),
+        border = BorderStroke(1.dp, Color(0xFF1E1E24))
     ) {
-        Text(
-            "Run Dumpstate",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left: Logs (hamburger icon with 3 horizontal lines)
+            BottomNavItem(
+                icon = R.drawable.ic_menu,
+                label = "Logs",
+                enabled = !isLoadingDetail,
+                onClick = onOpenLogs,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Center: Run Diagnostics (play button)
+            BottomNavItem(
+                icon = R.drawable.ic_play,
+                label = "Run Diagnostics",
+                enabled = !isLoadingDetail,
+                isPrimary = true,
+                onClick = onRunDiagnostics,
+                modifier = Modifier.weight(1.3f)
+            )
+
+            // Right: Guide / Info (clean circular i icon)
+            BottomNavItem(
+                icon = R.drawable.ic_info_circle,
+                label = "Guide",
+                enabled = !isLoadingDetail,
+                onClick = onOpenGuide,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavItem(
+    icon: Int,
+    label: String,
+    enabled: Boolean,
+    isPrimary: Boolean = false,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tp = textPrimary()
+    val muted = textMuted()
+    val contentColor = if (enabled) {
+        if (isPrimary) Color(0xFF00E676) else tp
+    } else {
+        muted.copy(alpha = 0.35f)
+    }
+
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        color = if (isPrimary) Color(0xFF152219) else Color.Transparent,
+        border = if (isPrimary) BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.35f)) else null,
+        modifier = modifier.padding(horizontal = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = 11.sp
+                ),
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }
 
