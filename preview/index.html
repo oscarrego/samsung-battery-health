@@ -529,7 +529,7 @@
     .btn-modal-skip {
       flex: 1;
       height: 44px;
-      background: #FFFFFF;
+      background: var(--accent-green);
       border: none;
       color: #000000;
       border-radius: 12px;
@@ -537,7 +537,7 @@
       font-weight: 700;
       cursor: pointer;
     }
-    .btn-modal-skip:hover { background: #EDEDED; }
+    .btn-modal-skip:hover { background: #15f589; }
 
     .setup-toggle {
       display: flex;
@@ -811,22 +811,22 @@
     }
     .toast.show { opacity: 1; }
 
-    /* Bottom Navigation Bar (Clean Icon-Only Dock) */
+    /* Bottom Navigation Bar (Minimalist AMOLED Black Instagram / YouTube style) */
     .bottom-nav {
       width: 100%;
-      background: #101014;
-      border-top: 1px solid #22222A;
-      border-radius: 28px 28px 0 0;
+      background: #000000;
+      border-top: 1px solid #1A1A1A;
+      border-radius: 24px 24px 0 0;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 10px 24px 6px;
+      padding: 10px 24px 8px;
       box-sizing: border-box;
       margin-top: auto;
     }
     .nav-item {
       background: transparent;
-      border: 1px solid transparent;
+      border: none;
       outline: none;
       display: flex;
       align-items: center;
@@ -835,27 +835,15 @@
       height: 52px;
       border-radius: 50%;
       cursor: pointer;
-      color: var(--text-primary);
-      transition: background .15s ease, transform .12s ease;
+      color: #FFFFFF;
+      transition: background .15s ease, opacity .15s ease, transform .12s ease;
     }
     .nav-item:hover {
       background: rgba(255,255,255,0.06);
     }
     .nav-item:active {
-      transform: scale(0.93);
-      background: rgba(255,255,255,0.1);
-    }
-    .nav-item-primary {
-      background: #142418;
-      border-color: rgba(0, 230, 118, 0.4);
-      color: var(--accent-green);
-    }
-    .nav-item-primary:hover {
-      background: #1a2e20;
-    }
-    .nav-item-primary:active {
-      background: #203a27;
-      transform: scale(0.93);
+      transform: scale(0.92);
+      opacity: 0.7;
     }
     .nav-icon {
       width: 26px;
@@ -1080,12 +1068,6 @@
                 <span class="quick-tile-sub">Potential</span>
               </div>
             </div>
-          </div>
-
-          <!-- Taking Too Long Skip Button Card -->
-          <div class="skip-btn-card" id="skipBtnCard">
-            <div class="skip-btn-sub">Taking too long?</div>
-            <div class="skip-btn-title">Skip for concise details only</div>
           </div>
 
           <!-- Section 4 -- View Battery Details Button -->
@@ -1443,12 +1425,12 @@
         </div>
       </div>
 
-      <!-- 1-Minute Loading Dialog Modal -->
+      <!-- 1-Minute Loading Dialog Modal (Center Window) -->
       <div class="modal-scrim" id="oneMinModal" style="display:none;">
         <div class="modal-card">
-          <div class="modal-title">Loading taking longer than usual</div>
+          <div class="modal-title">Taking too long for logs to load?</div>
           <div class="modal-desc">
-            Reading this dumpstate log has taken over 1 minute. Would you like to wait for full details, or skip to concise details now?
+            Reading this dumpstate log has taken over 1 minute. Would you like to wait for the complete dump, or skip to view the core battery health now?
           </div>
           <div class="modal-actions">
             <button class="btn-modal-wait" id="btnModalWait">Wait</button>
@@ -1467,7 +1449,7 @@
           </svg>
         </button>
 
-        <button class="nav-item nav-item-primary" id="navBtnDiag" title="Run SysDump Diagnostics">
+        <button class="nav-item" id="navBtnDiag" title="Run SysDump Diagnostics">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5.14 C8 4.35 8.87 3.87 9.54 4.29 L19.04 10.29 C19.67 10.69 19.67 11.61 19.04 12.01 L9.54 18.01 C8.87 18.43 8 17.95 8 17.16 Z"/>
           </svg>
@@ -1615,16 +1597,16 @@
     function setConciseMode(active) {
       isConcise = active;
       if (active) {
-        btnDetailsLabel.textContent = 'View battery details (Concise)';
+        btnDetailsLabel.textContent = 'View battery details';
         conciseBanner.style.display = 'block';
         rawContentWrap.style.display = 'none';
-        skipBtnCard.style.display = 'none';
-        showToast('Concise mode active: main health & cycles loaded');
+        if (skipBtnCard) skipBtnCard.style.display = 'none';
+        showToast('Summary mode active: key health & cycles loaded');
       } else {
         btnDetailsLabel.textContent = 'View battery details';
         conciseBanner.style.display = 'none';
         rawContentWrap.style.display = 'block';
-        skipBtnCard.style.display = 'block';
+        if (skipBtnCard) skipBtnCard.style.display = 'block';
         showToast('Full dumpstate details loaded');
       }
     }
@@ -1644,7 +1626,7 @@
       setConciseMode(true);
     });
 
-    skipBtnCard.addEventListener('click', () => setConciseMode(true));
+    if (skipBtnCard) skipBtnCard.addEventListener('click', () => setConciseMode(true));
     btnLoadFull.addEventListener('click', () => setConciseMode(false));
 
     // Bottom Log Sheet interactions

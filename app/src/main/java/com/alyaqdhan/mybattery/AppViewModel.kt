@@ -44,11 +44,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         showTakingTooLong = false
         showOneMinuteDialog = false
         loadingTimeoutJob = viewModelScope.launch {
-            delay(3500) // Offer skip button if loading takes over 3.5 seconds
-            if (isLoadingDetail) {
-                showTakingTooLong = true
-            }
-            delay(56500) // Total 60 seconds (1 minute): prompt user with Wait / Skip
+            delay(60000) // 1 minute: prompt user with center window if loading takes too long
             if (isLoadingDetail) {
                 showOneMinuteDialog = true
             }

@@ -296,100 +296,48 @@ private fun BatteryDashboard(
                     )
             )
 
-            // 2. Interactive Skip Button (on top of scrim, before 1-minute dialog)
+            // 2. One-Minute Center Dialog with Wait and Skip options
             androidx.compose.animation.AnimatedVisibility(
-                visible = viewModel.showTakingTooLong && !viewModel.showOneMinuteDialog,
-                enter   = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 },
-                exit    = fadeOut(tween(200)),
+                visible  = viewModel.showOneMinuteDialog,
+                enter    = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.92f),
+                exit     = fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 0.92f),
                 modifier = Modifier.fillMaxSize()
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.BottomCenter
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.72f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Surface(
-                        onClick = { viewModel.skipToConciseMode() },
-                        shape   = RoundedCornerShape(16.dp),
-                        color   = Color(0xFF16161A),
+                        shape   = RoundedCornerShape(22.dp),
+                        color   = Color(0xFF141418),
                         border  = BorderStroke(1.dp, Color(0xFF2C2C34)),
-                        shadowElevation = 8.dp,
+                        shadowElevation = 24.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 24.dp, end = 24.dp, bottom = 44.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "Taking too long?",
-                                    color = muted,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    "Skip for essential details only",
-                                    color = tp,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. One-Minute bottom sheet with Wait and Skip options (cannot be dismissed)
-            androidx.compose.animation.AnimatedVisibility(
-                visible = viewModel.showOneMinuteDialog,
-                enter   = slideInVertically(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)
-                ) { it } + fadeIn(tween(200)),
-                exit    = slideOutVertically(tween(220)) { it } + fadeOut(tween(180)),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    Surface(
-                        shape   = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                        color   = Color(0xFF141418),
-                        border  = BorderStroke(1.dp, Color(0xFF2E2E36)),
-                        shadowElevation = 24.dp,
-                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = 26.dp)
+                            .clickable(enabled = false, onClick = {})
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 28.dp),
+                            modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Handle bar
-                            Box(
-                                Modifier
-                                    .width(40.dp)
-                                    .height(4.dp)
-                                    .background(Color(0xFF3A3A42), RoundedCornerShape(2.dp))
-                            )
-                            Spacer(Modifier.height(20.dp))
                             Text(
-                                "Log is taking a while",
+                                "Taking too long for logs to load?",
                                 color = tp,
+                                textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp
                                 )
                             )
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(10.dp))
                             Text(
-                                "Reading this log has taken over 1 minute. You can wait for the full details, or load only the key battery information now.",
+                                "Reading this dumpstate log has taken over 1 minute. Would you like to wait for the complete dump, or skip to view the core battery health now?",
                                 color = textSecondary(),
                                 textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp)
+                                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 19.sp)
                             )
                             Spacer(Modifier.height(24.dp))
                             Row(
@@ -400,8 +348,8 @@ private fun BatteryDashboard(
                                     onClick = { viewModel.continueWaiting() },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(50.dp),
-                                    shape = RoundedCornerShape(14.dp),
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF1E1E24),
                                         contentColor   = tp
@@ -410,15 +358,18 @@ private fun BatteryDashboard(
                                 ) {
                                     Text(
                                         "Wait",
-                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 14.sp
+                                        )
                                     )
                                 }
                                 Button(
                                     onClick = { viewModel.skipToConciseMode() },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(50.dp),
-                                    shape = RoundedCornerShape(14.dp),
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF00E676),
                                         contentColor   = Color.Black
@@ -426,7 +377,10 @@ private fun BatteryDashboard(
                                 ) {
                                     Text(
                                         "Skip",
-                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp
+                                        )
                                     )
                                 }
                             }
@@ -486,9 +440,9 @@ private fun BottomNavBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        color    = Color(0xFF101014),
-        border   = BorderStroke(1.dp, Color(0xFF22222A))
+        shape    = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        color    = Color.Black,
+        border   = BorderStroke(1.dp, Color(0xFF1A1A1A))
     ) {
         Row(
             modifier = Modifier
@@ -512,7 +466,6 @@ private fun BottomNavBar(
                 icon               = R.drawable.ic_play,
                 contentDescription = "Run Diagnostics",
                 enabled            = !isLoadingDetail,
-                isPrimary          = true,
                 onClick            = onRunDiagnostics,
                 modifier           = Modifier.weight(1f)
             )
@@ -534,17 +487,10 @@ private fun BottomNavIconButton(
     icon: Int,
     contentDescription: String,
     enabled: Boolean,
-    isPrimary: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tp = textPrimary()
-    val muted = textMuted()
-    val iconTint = when {
-        !enabled  -> muted.copy(alpha = 0.35f)
-        isPrimary -> Color(0xFF00E676)
-        else      -> tp
-    }
+    val iconTint = if (enabled) Color.White else Color(0xFF48484A)
 
     Box(
         modifier         = modifier,
@@ -554,8 +500,7 @@ private fun BottomNavIconButton(
             onClick  = onClick,
             enabled  = enabled,
             shape    = CircleShape,
-            color    = if (isPrimary) Color(0xFF142418) else Color.Transparent,
-            border   = if (isPrimary) BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.4f)) else null,
+            color    = Color.Transparent,
             modifier = Modifier.size(54.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
