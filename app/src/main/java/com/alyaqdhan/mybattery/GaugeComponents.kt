@@ -55,11 +55,11 @@ fun HealthGaugeCard(
     val healthLabel = when {
         isLoadingDetail  -> "Checking battery"
         isUnsupported    -> "Device unsupported"
-        animPct >= 95f   -> "Excellent"
-        animPct >= 90f   -> "Great"
-        animPct >= 80f   -> "Good"
-        animPct >= 70f   -> "Fair"
-        else             -> "Poor"
+        animPct >= 95f   -> "Excellent condition"
+        animPct >= 90f   -> "Great condition"
+        animPct >= 80f   -> "Good condition"
+        animPct >= 70f   -> "Fair condition"
+        else             -> "Poor condition"
     }
 
     val gaugeColor = when {
