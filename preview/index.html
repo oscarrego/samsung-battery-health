@@ -811,15 +811,16 @@
     }
     .toast.show { opacity: 1; }
 
-    /* Bottom Navigation Bar (YouTube Music / Android Navigation style) */
+    /* Bottom Navigation Bar (Clean Icon-Only Dock) */
     .bottom-nav {
       width: 100%;
-      background: #0C0C0E;
-      border-top: 1px solid #1E1E24;
+      background: #101014;
+      border-top: 1px solid #22222A;
+      border-radius: 28px 28px 0 0;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 6px 12px 6px;
+      padding: 10px 24px 6px;
       box-sizing: border-box;
       margin-top: auto;
     }
@@ -828,50 +829,139 @@
       border: 1px solid transparent;
       outline: none;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 6px 10px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
       cursor: pointer;
       color: var(--text-primary);
-      transition: background .15s ease, border-color .15s ease;
-      flex: 1;
+      transition: background .15s ease, transform .12s ease;
     }
     .nav-item:hover {
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.06);
     }
     .nav-item:active {
-      background: rgba(255,255,255,0.08);
+      transform: scale(0.93);
+      background: rgba(255,255,255,0.1);
     }
     .nav-item-primary {
-      background: #152219;
-      border-color: rgba(0, 230, 118, 0.35);
+      background: #142418;
+      border-color: rgba(0, 230, 118, 0.4);
       color: var(--accent-green);
-      flex: 1.35;
     }
     .nav-item-primary:hover {
-      background: #1a2a1f;
+      background: #1a2e20;
     }
     .nav-item-primary:active {
-      background: #1f3325;
+      background: #203a27;
+      transform: scale(0.93);
     }
     .nav-icon {
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
+    }
+
+    /* Bottom Log Sheet Modal */
+    .log-sheet-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 95;
+      display: none;
+      align-items: flex-end;
+      border-radius: 44px;
+      overflow: hidden;
+    }
+    .log-sheet-overlay.show {
+      display: flex;
+    }
+    .log-sheet-card {
+      width: 100%;
+      background: #131317;
+      border-top: 1px solid #26262E;
+      border-radius: 26px 26px 0 0;
+      padding: 12px 18px 24px;
+      box-sizing: border-box;
+      animation: slideUp 0.28s cubic-bezier(0, 0, 0.2, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0.5; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .log-sheet-handle {
+      width: 38px;
+      height: 4px;
+      background: #383842;
+      border-radius: 2px;
+      margin: 0 auto 10px;
+    }
+    .log-sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #24242C;
+    }
+    .log-sheet-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .log-sheet-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-green);
+      background: rgba(0,230,118,0.15);
+      padding: 2px 7px;
+      border-radius: 8px;
+    }
+    .log-sheet-close {
+      background: #1E1E24;
+      border: none;
+      color: var(--text-secondary);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
     }
-    .nav-label {
-      font-size: 11px;
+    .log-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 8px;
+      border-bottom: 1px solid #1E1E24;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .log-item-row:hover { background: rgba(255,255,255,0.03); }
+    .log-item-row.active {
+      background: rgba(0,230,118,0.08);
+    }
+    .log-item-name {
+      font-size: 12.5px;
+      color: var(--text-primary);
       font-weight: 500;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
     }
-    .nav-item-primary .nav-label {
-      font-weight: 700;
+    .log-item-row.active .log-item-name {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+    .log-item-time {
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
     /* Home bar */
@@ -1367,7 +1457,7 @@
         </div>
       </div>
 
-      <!-- Bottom Navigation Bar (like YouTube Music / Android Navigation) -->
+      <!-- Bottom Navigation Bar (Clean Icon-Only Dock) -->
       <div class="bottom-nav" id="bottomNav">
         <button class="nav-item" id="navBtnLogs" title="Browse Logs">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -1375,14 +1465,12 @@
             <line x1="4" y1="12" x2="20" y2="12"/>
             <line x1="4" y1="18" x2="20" y2="18"/>
           </svg>
-          <span class="nav-label">Logs</span>
         </button>
 
         <button class="nav-item nav-item-primary" id="navBtnDiag" title="Run SysDump Diagnostics">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5.14 C8 4.35 8.87 3.87 9.54 4.29 L19.04 10.29 C19.67 10.69 19.67 11.61 19.04 12.01 L9.54 18.01 C8.87 18.43 8 17.95 8 17.16 Z"/>
           </svg>
-          <span class="nav-label">Run Diagnostics</span>
         </button>
 
         <button class="nav-item" id="navBtnGuide" title="Setup Guide">
@@ -1391,8 +1479,42 @@
             <circle cx="12" cy="7.75" r="0.8" fill="currentColor"/>
             <line x1="12" y1="11" x2="12" y2="16"/>
           </svg>
-          <span class="nav-label">Guide</span>
         </button>
+      </div>
+
+      <!-- Bottom Log Sheet (Opens from bottom-left upwards) -->
+      <div class="log-sheet-overlay" id="logSheetOverlay">
+        <div class="log-sheet-card">
+          <div class="log-sheet-handle"></div>
+          <div class="log-sheet-header">
+            <div class="log-sheet-title">
+              <span>Log Files</span>
+              <span class="log-sheet-badge">3</span>
+            </div>
+            <button class="log-sheet-close" id="btnCloseLogSheet">✕</button>
+          </div>
+          <div class="log-list">
+            <div class="log-item-row active">
+              <div>
+                <div class="log-item-name">dumpstate_G965U</div>
+                <div class="log-item-time">4 hours ago · Active</div>
+              </div>
+              <span style="color:var(--accent-green);font-size:16px;">●</span>
+            </div>
+            <div class="log-item-row">
+              <div>
+                <div class="log-item-name">dumpstate_G965U_20231014</div>
+                <div class="log-item-time">1 day ago</div>
+              </div>
+            </div>
+            <div class="log-item-row">
+              <div>
+                <div class="log-item-name">dumpstate_G965U_20231010</div>
+                <div class="log-item-time">5 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Home bar indicator -->
@@ -1524,6 +1646,54 @@
 
     skipBtnCard.addEventListener('click', () => setConciseMode(true));
     btnLoadFull.addEventListener('click', () => setConciseMode(false));
+
+    // Bottom Log Sheet interactions
+    const logSheetOverlay = document.getElementById('logSheetOverlay');
+    const navBtnLogs = document.getElementById('navBtnLogs');
+    const btnCloseLogSheet = document.getElementById('btnCloseLogSheet');
+
+    if (navBtnLogs && logSheetOverlay) {
+      navBtnLogs.addEventListener('click', () => {
+        logSheetOverlay.classList.add('show');
+      });
+    }
+
+    if (btnCloseLogSheet && logSheetOverlay) {
+      btnCloseLogSheet.addEventListener('click', () => {
+        logSheetOverlay.classList.remove('show');
+      });
+    }
+
+    if (logSheetOverlay) {
+      logSheetOverlay.addEventListener('click', (e) => {
+        if (e.target === logSheetOverlay) {
+          logSheetOverlay.classList.remove('show');
+        }
+      });
+    }
+
+    // Nav Guide button scrolls to setup guide
+    const navBtnGuide = document.getElementById('navBtnGuide');
+    if (navBtnGuide) {
+      navBtnGuide.addEventListener('click', () => {
+        const setupCard = document.querySelector('.setup-card');
+        if (setupCard) {
+          setupCard.scrollIntoView({ behavior: 'smooth' });
+          if (setupBody && !setupBody.classList.contains('open')) {
+            setupBody.classList.add('open');
+            if (setupChevron) setupChevron.classList.add('open');
+          }
+        }
+      });
+    }
+
+    // Nav Diagnostics button simulates SysDump launch
+    const navBtnDiag = document.getElementById('navBtnDiag');
+    if (navBtnDiag) {
+      navBtnDiag.addEventListener('click', () => {
+        showToast('Opening Samsung SysDump (*#9900#)...');
+      });
+    }
 
     // Interactive preview shortcut: clicking header subtitle tests 1-minute modal
     const subHeader = document.querySelector('.subtitle');

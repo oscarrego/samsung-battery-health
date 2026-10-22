@@ -436,11 +436,12 @@ private fun BatteryDashboard(
             }
         }
 
-        // Log sheet scrim
+        // Log sheet scrim (dimmed backdrop)
         if (showLogSheet && !isLoadingDetail) {
             Box(
                 Modifier
                     .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.65f))
                     .clickable(
                         onClick           = { viewModel.dismissLogSheet() },
                         indication        = null,
@@ -449,13 +450,14 @@ private fun BatteryDashboard(
             )
         }
 
-        // ── Log sheet drop-down ───────────────────────────────────────────────
+        // ── Log sheet opening from bottom ─────────────────────────────────────
         AnimatedVisibility(
-            visible = showLogSheet && !isLoadingDetail,
-            enter   = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { -it } +
-                    fadeIn(tween(220, easing = FastOutSlowInEasing)),
-            exit    = slideOutVertically(tween(240, easing = FastOutLinearInEasing)) { -it } +
-                    fadeOut(tween(180, easing = FastOutLinearInEasing))
+            visible  = showLogSheet && !isLoadingDetail,
+            enter    = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it } +
+                    fadeIn(tween(200)),
+            exit     = slideOutVertically(tween(260, easing = FastOutLinearInEasing)) { it } +
+                    fadeOut(tween(180)),
+            modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             LogSheet(
                 allLogEntries   = allLogEntries,
@@ -484,52 +486,53 @@ private fun BottomNavBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color(0xFF0C0C0E),
-        border = BorderStroke(1.dp, Color(0xFF1E1E24))
+        shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color    = Color(0xFF101014),
+        border   = BorderStroke(1.dp, Color(0xFF22222A))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 24.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment     = Alignment.CenterVertically
         ) {
-            // Left: Logs (hamburger icon with 3 horizontal lines)
-            BottomNavItem(
-                icon = R.drawable.ic_menu,
-                label = "Logs",
-                enabled = !isLoadingDetail,
-                onClick = onOpenLogs,
-                modifier = Modifier.weight(1f)
+            // Left: Logs (hamburger icon)
+            BottomNavIconButton(
+                icon               = R.drawable.ic_menu,
+                contentDescription = "Browse Logs",
+                enabled            = !isLoadingDetail,
+                onClick            = onOpenLogs,
+                modifier           = Modifier.weight(1f)
             )
 
             // Center: Run Diagnostics (play button)
-            BottomNavItem(
-                icon = R.drawable.ic_play,
-                label = "Run Diagnostics",
-                enabled = !isLoadingDetail,
-                isPrimary = true,
-                onClick = onRunDiagnostics,
-                modifier = Modifier.weight(1.3f)
+            BottomNavIconButton(
+                icon               = R.drawable.ic_play,
+                contentDescription = "Run Diagnostics",
+                enabled            = !isLoadingDetail,
+                isPrimary          = true,
+                onClick            = onRunDiagnostics,
+                modifier           = Modifier.weight(1f)
             )
 
-            // Right: Guide / Info (clean circular i icon)
-            BottomNavItem(
-                icon = R.drawable.ic_info_circle,
-                label = "Guide",
-                enabled = !isLoadingDetail,
-                onClick = onOpenGuide,
-                modifier = Modifier.weight(1f)
+            // Right: Guide / Info (circular i icon)
+            BottomNavIconButton(
+                icon               = R.drawable.ic_info_circle,
+                contentDescription = "Setup Guide",
+                enabled            = !isLoadingDetail,
+                onClick            = onOpenGuide,
+                modifier           = Modifier.weight(1f)
             )
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(
+private fun BottomNavIconButton(
     icon: Int,
-    label: String,
+    contentDescription: String,
     enabled: Boolean,
     isPrimary: Boolean = false,
     onClick: () -> Unit,
@@ -537,44 +540,32 @@ private fun BottomNavItem(
 ) {
     val tp = textPrimary()
     val muted = textMuted()
-    val contentColor = if (enabled) {
-        if (isPrimary) Color(0xFF00E676) else tp
-    } else {
-        muted.copy(alpha = 0.35f)
+    val iconTint = when {
+        !enabled  -> muted.copy(alpha = 0.35f)
+        isPrimary -> Color(0xFF00E676)
+        else      -> tp
     }
 
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        color = if (isPrimary) Color(0xFF152219) else Color.Transparent,
-        border = if (isPrimary) BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.35f)) else null,
-        modifier = modifier.padding(horizontal = 4.dp)
+    Box(
+        modifier         = modifier,
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Surface(
+            onClick  = onClick,
+            enabled  = enabled,
+            shape    = CircleShape,
+            color    = if (isPrimary) Color(0xFF142418) else Color.Transparent,
+            border   = if (isPrimary) BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.4f)) else null,
+            modifier = Modifier.size(54.dp)
         ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = label,
-                tint = contentColor,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = label,
-                color = contentColor,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Medium,
-                    fontSize = 11.sp
-                ),
-                maxLines = 1,
-                softWrap = false
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter            = painterResource(icon),
+                    contentDescription = contentDescription,
+                    tint               = iconTint,
+                    modifier           = Modifier.size(26.dp)
+                )
+            }
         }
     }
 }
@@ -595,45 +586,84 @@ private fun LogSheet(
             .fillMaxWidth()
             .clickable(onClick = {}, indication = null,
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }),
-        color           = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 8.dp,
-        shape           = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+        color           = Color(0xFF131317),
+        border          = BorderStroke(1.dp, Color(0xFF26262E)),
+        shadowElevation = 16.dp,
+        shape           = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
     ) {
-        Column(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+        ) {
+            // Drag handle at top
+            Box(
+                Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(38.dp)
+                    .height(4.dp)
+                    .background(Color(0xFF383842), RoundedCornerShape(2.dp))
+                    .align(Alignment.CenterHorizontally)
+            )
+
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(start = 20.dp, end = 12.dp, top = 6.dp, bottom = 10.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    "Log Files",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "${allLogEntries.size}",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Log Files",
+                        color = textPrimary(),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF00E676).copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            "${allLogEntries.size}",
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                            color    = Color(0xFF00E676),
+                            style    = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+                }
+
+                FilledTonalIconButton(
+                    onClick  = onDismiss,
+                    modifier = Modifier.size(32.dp),
+                    colors   = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = Color(0xFF1E1E24),
+                        contentColor   = textSecondary()
+                    )
+                ) {
+                    Icon(
+                        painter            = painterResource(R.drawable.close),
+                        contentDescription = "Close",
+                        modifier           = Modifier.size(16.dp)
+                    )
+                }
             }
+
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color    = Color(0xFF24242C)
             )
 
             val logsScrollState = rememberScrollState()
             val logsScope       = rememberCoroutineScope()
 
-            Box(Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 280.dp)) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 200.dp)
+                        .heightIn(max = 280.dp)
                         .verticalScroll(logsScrollState)
-                        .padding(end = 12.dp, top = 4.dp, bottom = 20.dp)
+                        .padding(end = 12.dp, top = 6.dp, bottom = 16.dp)
                 ) {
                     if (allLogEntries.isEmpty()) {
                         Box(
@@ -668,7 +698,7 @@ private fun LogSheet(
                 }
 
                 if (logsScrollState.maxValue > 0) {
-                    val trackHeight    = 200.dp
+                    val trackHeight    = 260.dp
                     val thumbMinHeight = 32.dp
                     val density        = LocalDensity.current
                     val trackPx        = with(density) { trackHeight.toPx() }
