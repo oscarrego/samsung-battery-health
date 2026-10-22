@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -35,10 +36,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -187,12 +190,7 @@ private fun BatteryDashboard(
                         "Battery Health", color = tp,
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                     )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        "for Samsung devices", color = muted,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(6.dp))
                     if (isLoadingDetail) {
                         Text("…", color = muted.copy(alpha = 0.5f),
                             style = MaterialTheme.typography.labelSmall)
@@ -259,9 +257,9 @@ private fun BatteryDashboard(
                 Spacer(Modifier.height(16.dp))
                 Box(Modifier.alpha(cardAlpha)) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        CycleCountCard(effectiveInfo, isLoadingDetail, isNewBattery, gaugeReplayKey)
-                        Spacer(Modifier.height(16.dp))
                         QuickBatteryInfoCard(effectiveInfo, isLoadingDetail)
+                        Spacer(Modifier.height(16.dp))
+                        CycleCountCard(effectiveInfo, isLoadingDetail, isNewBattery, gaugeReplayKey)
                         Spacer(Modifier.height(16.dp))
                         ViewBatteryDetailsButton(
                             isConciseOnly = effectiveInfo.isConciseOnly,
@@ -531,9 +529,13 @@ private fun LogSheet(
     onReadRaw: (DocEntry) -> Unit,
     extractTs: (String) -> Long
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val dragOffsetY = remember { Animatable(0f) }
+
     Surface(
         modifier        = Modifier
             .fillMaxWidth()
+            .offset { IntOffset(0, dragOffsetY.value.roundToInt()) }
             .clickable(onClick = {}, indication = null,
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }),
         color           = Color.Black,
@@ -546,57 +548,58 @@ private fun LogSheet(
                 .fillMaxWidth()
                 .navigationBarsPadding()
         ) {
-            // Drag handle at top
+            // Drag handle at top with vertical drag gesture to move menu down according to finger movement
             Box(
                 Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(38.dp)
-                    .height(4.dp)
-                    .background(Color(0xFF2C2C2C), RoundedCornerShape(2.dp))
-                    .align(Alignment.CenterHorizontally)
-            )
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onDragEnd = {
+                                if (dragOffsetY.value > 120f) {
+                                    onDismiss()
+                                } else {
+                                    coroutineScope.launch {
+                                        dragOffsetY.animateTo(0f, tween(180, easing = FastOutSlowInEasing))
+                                    }
+                                }
+                            },
+                            onDragCancel = {
+                                coroutineScope.launch {
+                                    dragOffsetY.animateTo(0f, tween(180, easing = FastOutSlowInEasing))
+                                }
+                            },
+                            onVerticalDrag = { change, dragAmount ->
+                                change.consume()
+                                val nextOffset = (dragOffsetY.value + dragAmount).coerceAtLeast(0f)
+                                coroutineScope.launch {
+                                    dragOffsetY.snapTo(nextOffset)
+                                }
+                            }
+                        )
+                    }
+                    .padding(top = 12.dp, bottom = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    Modifier
+                        .width(42.dp)
+                        .height(4.dp)
+                        .background(Color(0xFF383838), RoundedCornerShape(2.dp))
+                )
+            }
 
+            // Header title (no indication number badge, no X close button)
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 12.dp, top = 6.dp, bottom = 10.dp),
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "Log Files",
-                        color = textPrimary(),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF00E676).copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            "${allLogEntries.size}",
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
-                            color    = Color(0xFF00E676),
-                            style    = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
-                }
-
-                FilledTonalIconButton(
-                    onClick  = onDismiss,
-                    modifier = Modifier.size(32.dp),
-                    colors   = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = Color(0xFF141414),
-                        contentColor   = textSecondary()
-                    )
-                ) {
-                    Icon(
-                        painter            = painterResource(R.drawable.close),
-                        contentDescription = "Close",
-                        modifier           = Modifier.size(16.dp)
-                    )
-                }
+                Text(
+                    "Log Files",
+                    color = textPrimary(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
             }
 
             HorizontalDivider(
@@ -638,10 +641,7 @@ private fun LogSheet(
                                 onReadRaw     = onReadRaw
                             )
                             if (idx < allLogEntries.lastIndex) {
-                                HorizontalDivider(
-                                    color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                                    modifier = Modifier.padding(start = 38.dp, end = 16.dp)
-                                )
+                                Spacer(Modifier.height(4.dp))
                             }
                         }
                     }
@@ -700,69 +700,67 @@ private fun LogEntry(
     onSelectEntry: (DocEntry) -> Unit,
     onReadRaw: (DocEntry) -> Unit
 ) {
-    val activeColor = Color(0xFF00E676)
     val displayName = BatteryParser.truncateLogDisplayName(entry.name)
+    val subtitleText = when {
+        isActive && relTime.isNotEmpty() -> "$relTime · Current Log"
+        isActive                         -> "Current Log"
+        else                             -> relTime
+    }
 
-    Row(
-        Modifier
+    Surface(
+        onClick  = { if (!isActive) onSelectEntry(entry) },
+        enabled  = !isActive,
+        shape    = RoundedCornerShape(12.dp),
+        color    = if (isActive) Color(0xFF141417) else Color.Transparent,
+        border   = if (isActive) BorderStroke(1.dp, Color(0xFF24242A)) else null,
+        modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (isActive) Modifier.background(activeColor.copy(alpha = 0.07f))
-                else Modifier
-            )
-            .padding(start = 20.dp, end = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
-        Box(Modifier.size(6.dp).background(if (isActive) activeColor else Color.Transparent, CircleShape))
-        Spacer(Modifier.width(12.dp))
-
-        Surface(
-            onClick  = { if (!isActive) onSelectEntry(entry) },
-            enabled  = !isActive,
-            modifier = Modifier.weight(1f),
-            color    = Color.Transparent,
-            shape    = RoundedCornerShape(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                Modifier.padding(vertical = 13.dp, horizontal = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                 Text(
                     displayName,
-                    color    = if (isActive) activeColor else MaterialTheme.colorScheme.onSurface,
-                    style    = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
                     ),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    if (relTime.isNotEmpty()) "($relTime)" else "",
-                    color    = if (isActive) activeColor.copy(alpha = 0.75f)
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
-                    style    = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                    softWrap = false
-                )
+                if (subtitleText.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        subtitleText,
+                        color = if (isActive) Color(0xFF9E9EA4) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
-        }
 
-        Surface(
-            onClick  = { onReadRaw(entry) },
-            modifier = Modifier.size(40.dp),
-            shape    = RoundedCornerShape(10.dp),
-            color    = Color(0xFF141414),
-            border   = BorderStroke(0.5.dp, Color(0xFF222222))
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painterResource(R.drawable.arrow_forward_ios),
-                    contentDescription = "View raw",
-                    tint     = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(13.dp)
-                )
+            Surface(
+                onClick  = { onReadRaw(entry) },
+                modifier = Modifier.size(36.dp),
+                shape    = RoundedCornerShape(8.dp),
+                color    = Color(0xFF161619),
+                border   = BorderStroke(0.5.dp, Color(0xFF24242A))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painterResource(R.drawable.arrow_forward_ios),
+                        contentDescription = "View raw",
+                        tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
             }
         }
     }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Battery Health - for Samsung devices (UI Preview)</title>
+  <title>Battery Health (UI Preview)</title>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -377,42 +377,41 @@
       color: var(--text-muted);
     }
 
-    /* Section 3: Quick Battery Info 3-Column Grid */
-    .quick-info-grid {
+    /* Section 2: Metric Cards Row (Charge, Temperature, Voltage) */
+    .metric-cards-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-top: 14px;
+      gap: 10px;
     }
-    .quick-tile {
-      background: #0E0E11;
+    .metric-card {
+      background: #101013;
       border: 1px solid var(--border-card);
-      border-radius: 14px;
-      padding: 12px 10px;
+      border-radius: 18px;
+      padding: 16px 14px;
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
+      box-sizing: border-box;
     }
-    .quick-tile-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      text-transform: uppercase;
+    .metric-card-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--accent-green);
+      margin-bottom: 14px;
     }
-    .quick-tile-value {
-      font-size: 17px;
+    .metric-card-value {
+      font-size: 19px;
       font-weight: 700;
-      color: var(--text-primary);
-      margin: 6px 0 2px;
+      color: #FFFFFF;
       letter-spacing: -0.02em;
       white-space: nowrap;
+      margin-bottom: 4px;
     }
-    .quick-tile-sub {
-      font-size: 10.5px;
-      color: var(--text-secondary);
+    .metric-card-label {
+      font-size: 12px;
+      font-weight: 400;
+      color: #8E8E93;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     /* Section 4: Buttons */
@@ -881,16 +880,17 @@
       to   { transform: translateY(0);    opacity: 1; }
     }
     .log-sheet-handle {
-      width: 38px;
+      width: 42px;
       height: 4px;
-      background: #2C2C2C;
+      background: #383838;
       border-radius: 2px;
       margin: 0 auto 10px;
+      cursor: grab;
+      touch-action: none;
     }
     .log-sheet-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       margin-bottom: 12px;
       padding-bottom: 10px;
       border-bottom: 1px solid #1A1A1A;
@@ -901,55 +901,37 @@
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .log-sheet-badge {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent-green);
-      background: rgba(0,230,118,0.15);
-      padding: 2px 7px;
-      border-radius: 8px;
-    }
-    .log-sheet-close {
-      background: #141414;
-      border: none;
-      color: var(--text-secondary);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 13px;
     }
     .log-item-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 8px;
-      border-bottom: 1px solid #141414;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: background 0.12s;
+      transition: background 0.12s, border-color 0.12s;
+      margin-bottom: 4px;
     }
     .log-item-row:hover { background: rgba(255,255,255,0.03); }
     .log-item-row.active {
-      background: rgba(0,230,118,0.08);
+      background: #141417;
+      border: 1px solid #24242A;
     }
     .log-item-name {
-      font-size: 12.5px;
-      color: var(--text-primary);
+      font-size: 13px;
+      color: #FFFFFF;
       font-weight: 500;
     }
     .log-item-row.active .log-item-name {
-      color: var(--accent-green);
+      color: #FFFFFF;
       font-weight: 600;
     }
     .log-item-time {
       font-size: 11px;
       color: var(--text-muted);
+    }
+    .log-item-row.active .log-item-time {
+      color: #9E9EA4;
     }
 
     /* Home bar */
@@ -1000,7 +982,6 @@
         <div class="app-header">
           <div class="header-center">
             <span class="header-title">Battery Health</span>
-            <span class="header-indicator" style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px;">for Samsung devices</span>
             <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago · Installed 15/5/2018</span>
           </div>
         </div>
@@ -1020,11 +1001,39 @@
               </div>
             </div>
             <div>
-              <span class="pill">Good condition</span>
+              <span class="pill">Good</span>
             </div>
           </div>
 
-          <!-- Section 2 -- Charge Cycles -->
+          <!-- Section 2: Metric Cards (Charge, Temperature, Voltage) -->
+          <div class="metric-cards-row">
+            <div class="metric-card">
+              <svg class="metric-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="16" height="12" rx="2.5" ry="2.5"/>
+                <line x1="21" y1="10" x2="21" y2="14" stroke-width="2.5"/>
+                <path d="M10.5 8.5 L8.5 12 L11 12 L9.5 15.5 L12 11.5 L9.5 11.5 Z" fill="currentColor" stroke="none"/>
+              </svg>
+              <span class="metric-card-value">83%</span>
+              <span class="metric-card-label">Charge</span>
+            </div>
+            <div class="metric-card">
+              <svg class="metric-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                <circle cx="11.5" cy="17.5" r="2" fill="currentColor" stroke="none"/>
+              </svg>
+              <span class="metric-card-value">29.5°C</span>
+              <span class="metric-card-label">Temperature</span>
+            </div>
+            <div class="metric-card">
+              <svg class="metric-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              <span class="metric-card-value">4.12 V</span>
+              <span class="metric-card-label">Voltage</span>
+            </div>
+          </div>
+
+          <!-- Section 3: Charge Cycles -->
           <div class="card">
             <div class="cycles-card-header">
               <div class="cycles-header-label">Charge Cycles</div>
@@ -1048,34 +1057,12 @@
             </div>
           </div>
 
-          <!-- Section 3 -- Quick Battery Information (3 Columns, no status box) -->
-          <div class="card">
-            <div class="cycles-header-label">Quick Battery Info</div>
-            <div class="cycles-header-sub">Live readings from battery service</div>
-            <div class="quick-info-grid">
-              <div class="quick-tile">
-                <span class="quick-tile-label">Level</span>
-                <span class="quick-tile-value">83%</span>
-                <span class="quick-tile-sub">Charge</span>
-              </div>
-              <div class="quick-tile">
-                <span class="quick-tile-label">Temp</span>
-                <span class="quick-tile-value">29.5 °C</span>
-                <span class="quick-tile-sub">Sensor</span>
-              </div>
-              <div class="quick-tile">
-                <span class="quick-tile-label">Voltage</span>
-                <span class="quick-tile-value">4.12 V</span>
-                <span class="quick-tile-sub">Potential</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 4 -- View Battery Details Button -->
+          <!-- Section 4: View Battery Details Button -->
           <button class="btn-details" id="btnGoDetails">
             <span id="btnDetailsLabel">View battery details</span>
             <span style="font-size:17px;color:#8E8E93;">›</span>
           </button>
+          <div style="text-align:center;font-size:11px;color:rgba(142,142,147,0.45);margin:6px 0 2px;">v 1.0</div>
 
           <!-- Collapsible Setup Guide -->
           <div class="card setup-card">
@@ -1123,7 +1110,7 @@
             </div>
           </div>
 
-          <div style="text-align:center;font-size:11px;color:#48484A;margin-top:-4px;">v2.1.0</div>
+          <div style="text-align:center;font-size:11px;color:#48484A;margin-top:-4px;">v 1.0</div>
         </div>
       </div>
 
@@ -1467,22 +1454,19 @@
 
       <!-- Bottom Log Sheet (Opens from bottom-left upwards) -->
       <div class="log-sheet-overlay" id="logSheetOverlay">
-        <div class="log-sheet-card">
-          <div class="log-sheet-handle"></div>
+        <div class="log-sheet-card" id="logSheetCard">
+          <div class="log-sheet-handle" id="logSheetHandle"></div>
           <div class="log-sheet-header">
             <div class="log-sheet-title">
               <span>Log Files</span>
-              <span class="log-sheet-badge">3</span>
             </div>
-            <button class="log-sheet-close" id="btnCloseLogSheet">✕</button>
           </div>
           <div class="log-list">
             <div class="log-item-row active">
               <div>
                 <div class="log-item-name">dumpstate_G965U</div>
-                <div class="log-item-time">4 hours ago · Active</div>
+                <div class="log-item-time">4 hours ago · Current Log</div>
               </div>
-              <span style="color:var(--accent-green);font-size:16px;">●</span>
             </div>
             <div class="log-item-row">
               <div>
@@ -1630,20 +1614,19 @@
     if (skipBtnCard) skipBtnCard.addEventListener('click', () => setConciseMode(true));
     btnLoadFull.addEventListener('click', () => setConciseMode(false));
 
-    // Bottom Log Sheet interactions
+    // Bottom Log Sheet interactions & drag-down dismiss
     const logSheetOverlay = document.getElementById('logSheetOverlay');
+    const logSheetCard = document.getElementById('logSheetCard');
+    const logSheetHandle = document.getElementById('logSheetHandle');
     const navBtnLogs = document.getElementById('navBtnLogs');
-    const btnCloseLogSheet = document.getElementById('btnCloseLogSheet');
 
     if (navBtnLogs && logSheetOverlay) {
       navBtnLogs.addEventListener('click', () => {
+        if (logSheetCard) {
+          logSheetCard.style.transition = 'none';
+          logSheetCard.style.transform = 'translateY(0px)';
+        }
         logSheetOverlay.classList.add('show');
-      });
-    }
-
-    if (btnCloseLogSheet && logSheetOverlay) {
-      btnCloseLogSheet.addEventListener('click', () => {
-        logSheetOverlay.classList.remove('show');
       });
     }
 
@@ -1653,6 +1636,54 @@
           logSheetOverlay.classList.remove('show');
         }
       });
+    }
+
+    // Interactive drag-down to dismiss menu tracking finger movement
+    if (logSheetHandle && logSheetCard && logSheetOverlay) {
+      let isDragging = false;
+      let startY = 0;
+      let currentDeltaY = 0;
+
+      logSheetHandle.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        startY = e.clientY;
+        currentDeltaY = 0;
+        logSheetCard.style.transition = 'none';
+        logSheetHandle.setPointerCapture(e.pointerId);
+      });
+
+      logSheetHandle.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const delta = e.clientY - startY;
+        if (delta > 0) {
+          currentDeltaY = delta;
+          logSheetCard.style.transform = `translateY(${delta}px)`;
+        } else {
+          currentDeltaY = 0;
+          logSheetCard.style.transform = 'translateY(0px)';
+        }
+      });
+
+      const endDrag = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        try { logSheetHandle.releasePointerCapture(e.pointerId); } catch (_) {}
+
+        if (currentDeltaY > 70) {
+          logSheetCard.style.transition = 'transform 0.22s cubic-bezier(0.2, 0, 0, 1)';
+          logSheetCard.style.transform = 'translateY(100%)';
+          setTimeout(() => {
+            logSheetOverlay.classList.remove('show');
+            logSheetCard.style.transform = 'translateY(0px)';
+          }, 220);
+        } else {
+          logSheetCard.style.transition = 'transform 0.18s cubic-bezier(0, 0, 0.2, 1)';
+          logSheetCard.style.transform = 'translateY(0px)';
+        }
+      };
+
+      logSheetHandle.addEventListener('pointerup', endDrag);
+      logSheetHandle.addEventListener('pointercancel', endDrag);
     }
 
     // Nav Guide button scrolls to setup guide

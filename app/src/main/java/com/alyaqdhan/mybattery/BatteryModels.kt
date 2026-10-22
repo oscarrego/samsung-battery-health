@@ -116,8 +116,7 @@ data class BatteryInfo(
  * 90-94%:  Great
  * 80-89%:  Good
  * 70-79%:  Fair
- * 60-69%:  Poor
- * Below 60%: Very poor
+ * Below 70%: Poor
  */
 fun getBatteryHealthLabel(percent: Int?): String {
     if (percent == null) return ""
@@ -126,8 +125,7 @@ fun getBatteryHealthLabel(percent: Int?): String {
         percent >= 90 -> "Great"
         percent >= 80 -> "Good"
         percent >= 70 -> "Fair"
-        percent >= 60 -> "Poor"
-        else          -> "Very poor"
+        else          -> "Poor"
     }
 }
 
