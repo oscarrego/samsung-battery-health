@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyBattery (UI Preview)</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-page:       #000000;
+      --bg-phone:      #000000;
+      --bg-card:       #131315;
+      --border-card:   #242428;
+      --text-primary:  #FFFFFF;
+      --text-secondary:#8E8E93;
+      --text-muted:    #48484A;
+      --accent-green:  #00E676;
+      --track-color:   #1E1E22;
+      --radius-card:   20px;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg-page);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 64px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top switcher bar for quick browser preview */
+    .screen-switcher {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: #111114;
+      border: 1px solid #222228;
+      border-radius: 100px;
+      padding: 4px;
+    }
+
+    .switcher-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .switcher-btn.active {
+      background: #FFFFFF;
+      color: #000000;
+    }
+
+    /* Phone shell */
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      background: var(--bg-phone);
+      border-radius: 44px;
+      box-shadow:
+        0 0 0 1px #1a1a1a,
+        0 0 0 3px #0d0d0d,
+        0 32px 80px rgba(0,0,0,.85),
+        0 8px 20px rgba(0,0,0,.6);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Notch */
+    .phone-notch {
+      width: 126px;
+      height: 30px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-notch::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      margin-right: 6px;
+    }
+    .phone-notch::after {
+      content: '';
+      width: 60px;
+      height: 8px;
+      border-radius: 4px;
+      background: #1a1a1a;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 24px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-bar-battery {
+      width: 22px;
+      height: 11px;
+      border: 1.5px solid #fff;
+      border-radius: 2.5px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 1.5px;
+    }
+    .status-bar-battery::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 5px;
+      background: #fff;
+      border-radius: 0 1px 1px 0;
+    }
+    .status-bar-battery-fill {
+      height: 100%;
+      width: 83%;
+      background: var(--text-primary);
+      border-radius: 1px;
+    }
+
+    /* App content container */
+    .app-scroll {
+      padding: 0 0 32px;
+      overflow-y: auto;
+      max-height: 840px;
+      scrollbar-width: none;
+    }
+    .app-scroll::-webkit-scrollbar { display: none; }
+
+    /* Screen view toggles */
+    .screen-view {
+      display: none;
+    }
+    .screen-view.active-view {
+      display: block;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* MAIN SCREEN STYLES                                            */
+    /* ------------------------------------------------------------- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px 14px;
+      border-bottom: 1px solid #111;
+    }
+
+    .header-icon-btn {
+      width: 36px;
+      height: 36px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--text-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .header-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      padding: 0 8px;
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+      margin-top: 2px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .content {
+      padding: 20px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-card);
+      padding: 20px;
+    }
+
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Gauge */
+    .health-card { padding: 24px 20px; text-align: center; }
+    .gauge-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0 16px;
+      position: relative;
+    }
+    .gauge-svg {
+      width: 190px;
+      height: 190px;
+      transform: rotate(-90deg);
+    }
+    .gauge-track {
+      fill: none;
+      stroke: var(--track-color);
+      stroke-width: 12;
+    }
+    .gauge-arc {
+      fill: none;
+      stroke: var(--accent-green);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 477.5;
+      stroke-dashoffset: 477.5;
+      animation: arcFill 1.4s cubic-bezier(.4,0,.2,1) forwards, gaugeGlow 2.4s ease-in-out infinite 1.4s;
+    }
+
+    @keyframes arcFill {
+      to { stroke-dashoffset: 81.2; }
+    }
+    @keyframes gaugeGlow {
+      0%, 100% {
+        stroke: #00E676;
+        filter: drop-shadow(0 0 2px rgba(0, 230, 118, 0.4));
+      }
+      50% {
+        stroke: #38ef7d;
+        filter: drop-shadow(0 0 12px rgba(0, 230, 118, 0.95));
+      }
+    }
+
+    .gauge-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .gauge-percent {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .gauge-status {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-green);
+      letter-spacing: 0.04em;
+      margin-top: 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border-card);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* Cycles Card */
+    .cycles-card-header { margin-bottom: 16px; }
+    .cycles-header-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .cycles-header-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .cycles-main-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .cycles-number {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .cycles-unit {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .wear-badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border-card);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      background: var(--track-color);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--text-primary);
+      border-radius: 100px;
+      width: 2.38%;
+    }
+    .progress-ticks {
+      display: flex;
+      justify-content: space-between;
+    }
+    .tick {
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    /* Section 3: Quick Battery Info Grid */
+    .quick-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .quick-tile {
+      background: #0E0E11;
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    .quick-tile-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .quick-tile-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 6px 0 2px;
+      letter-spacing: -0.02em;
+    }
+    .quick-tile-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Section 4: Buttons */
+    .btn-details {
+      width: 100%;
+      height: 52px;
+      background: #16161A;
+      color: var(--text-primary);
+      border: 1px solid #282830;
+      border-radius: 14px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-details:hover {
+      background: #1E1E24;
+    }
+
+    .btn-run {
+      width: 100%;
+      height: 52px;
+      background: #FFFFFF;
+      color: #000000;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-run:hover { opacity: 0.92; }
+
+    /* Collapsible setup */
+    .setup-card { padding: 0; overflow: hidden; }
+    .setup-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+    }
+    .setup-toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .setup-toggle-icon {
+      width: 30px;
+      height: 30px;
+      background: #18181C;
+      border: 1px solid #282830;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .setup-toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .setup-toggle-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .setup-chevron {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform .25s;
+    }
+    .setup-chevron.open { transform: rotate(180deg); }
+    .setup-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease;
+    }
+    .setup-body.open { max-height: 550px; }
+    .setup-inner {
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--border-card);
+    }
+    .step {
+      display: flex;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #1A1A1E;
+    }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      background: #18181C;
+      border: 1px solid #282830;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #FFF;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .step-desc {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* BATTERY DETAILS SCREEN STYLES                                 */
+    /* ------------------------------------------------------------- */
+    .details-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-card);
+    }
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .details-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .details-header-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .copy-dump-btn {
+      background: #1A1A20;
+      border: 1px solid var(--border-card);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .copy-dump-btn:hover { background: #26262E; }
+
+    .details-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-card);
+      padding: 20px;
+    }
+    .detail-card-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #1C1C22;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .detail-row-left {
+      flex: 1;
+      padding-right: 12px;
+    }
+    .detail-row-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .detail-row-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .detail-row-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .tag-live {
+      font-size: 9px;
+      font-weight: 700;
+      color: #00E676;
+      background: #142416;
+      border: 1px solid #00E676;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .tag-peak {
+      font-size: 9px;
+      font-weight: 700;
+      color: #FF9800;
+      background: #261D16;
+      border: 1px solid #FF9800;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .distinction-banner {
+      background: #16161A;
+      border: 1px solid var(--border-card);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    /* Advanced Section F */
+    .raw-search {
+      width: 100%;
+      height: 40px;
+      background: #0E0E12;
+      border: 1px solid var(--border-card);
+      border-radius: 10px;
+      padding: 0 12px;
+      color: #FFF;
+      font-size: 12px;
+      outline: none;
+      margin: 12px 0 8px;
+    }
+    .raw-search:focus {
+      border-color: #3A3A44;
+    }
+    .raw-list {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      scrollbar-width: thin;
+    }
+    .raw-row {
+      display: flex;
+      justify-content: space-between;
+      background: #0E0E12;
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .raw-row:hover { background: #181820; }
+    .raw-key { color: #7A9CC0; }
+    .raw-val { color: #FFF; font-weight: 600; text-align: right; }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #242428;
+      border: 1px solid #383840;
+      color: #FFF;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 100px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Home bar */
+    .home-indicator {
+      display: flex;
+      justify-content: center;
+      padding: 16px 0 8px;
+    }
+    .home-bar {
+      width: 130px;
+      height: 4px;
+      background: #333;
+      border-radius: 100px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Switcher Tabs for Web Preview -->
+  <div class="screen-switcher">
+    <button class="switcher-btn active" id="tabMain">Main Dashboard</button>
+    <button class="switcher-btn" id="tabDetails">Battery Details Screen</button>
+  </div>
+
+  <!-- Phone Shell -->
+  <div class="phone">
+    <div class="phone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-bar-right">
+        <span>5G</span>
+        <div class="status-bar-battery">
+          <div class="status-bar-battery-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scrollable container -->
+    <div class="app-scroll">
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 1: MAIN DASHBOARD                                -->
+      <!-- ======================================================= -->
+      <div class="screen-view active-view" id="viewMain">
+        <!-- Header -->
+        <div class="app-header">
+          <div class="header-icon-btn">≡</div>
+          <div class="header-center">
+            <span class="header-title">My Battery</span>
+            <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago · Installed 15/5/2018</span>
+          </div>
+          <div class="header-icon-btn">ⓘ</div>
+        </div>
+
+        <div class="content">
+
+          <!-- Section 1 -- Battery Health -->
+          <div class="card health-card">
+            <div class="card-label">Battery Health</div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 180 180">
+                <circle class="gauge-track" cx="90" cy="90" r="76"/>
+                <circle class="gauge-arc" cx="90" cy="90" r="76"/>
+              </svg>
+              <div class="gauge-center">
+                <span class="gauge-percent">83%</span>
+                <span class="gauge-status">Good</span>
+              </div>
+            </div>
+            <div>
+              <span class="pill">Battery is in great condition</span>
+            </div>
+          </div>
+
+          <!-- Section 2 -- Charge Cycles -->
+          <div class="card">
+            <div class="cycles-card-header">
+              <div class="cycles-header-label">Charge Cycles</div>
+              <div class="cycles-header-sub">Full charge equivalents</div>
+            </div>
+            <div class="cycles-main-row">
+              <div>
+                <div class="cycles-number">119</div>
+                <div class="cycles-unit">cycles</div>
+              </div>
+              <div class="wear-badge">Low wear</div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill"></div>
+            </div>
+            <div class="progress-ticks">
+              <span class="tick">0</span>
+              <span class="tick">2000</span>
+              <span class="tick">3000</span>
+              <span class="tick">5000+</span>
+            </div>
+          </div>
+
+          <!-- Section 3 -- Quick Battery Information -->
+          <div class="card">
+            <div class="cycles-header-label">Quick Battery Info</div>
+            <div class="cycles-header-sub">Live readings from battery service</div>
+            <div class="quick-info-grid">
+              <div class="quick-tile">
+                <span class="quick-tile-label">Level</span>
+                <span class="quick-tile-value">83%</span>
+                <span class="quick-tile-sub">Current charge</span>
+              </div>
+              <div class="quick-tile">
+                <span class="quick-tile-label">Temperature</span>
+                <span class="quick-tile-value">29.5 °C</span>
+                <span class="quick-tile-sub">Internal sensor</span>
+              </div>
+              <div class="quick-tile">
+                <span class="quick-tile-label">Voltage</span>
+                <span class="quick-tile-value">4.12 V</span>
+                <span class="quick-tile-sub">Battery potential</span>
+              </div>
+              <div class="quick-tile">
+                <span class="quick-tile-label">Status</span>
+                <span class="quick-tile-value">Discharging</span>
+                <span class="quick-tile-sub">On battery power</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4 -- View Battery Details Button -->
+          <button class="btn-details" id="btnGoDetails">
+            <span>View battery details</span>
+            <span style="font-size:17px;color:#8E8E93;">›</span>
+          </button>
+
+          <!-- Run Dumpstate Button -->
+          <button class="btn-run">Run Dumpstate</button>
+
+          <!-- Collapsible Setup Guide -->
+          <div class="card setup-card">
+            <div class="setup-toggle" id="setupToggle">
+              <div class="setup-toggle-left">
+                <div class="setup-toggle-icon">📋</div>
+                <div>
+                  <div class="setup-toggle-label">How to get your log</div>
+                  <div class="setup-toggle-sub">4 STEPS · MANUAL SETUP</div>
+                </div>
+              </div>
+              <span class="setup-chevron open" id="setupChevron">▼</span>
+            </div>
+            <div class="setup-body open" id="setupBody">
+              <div class="setup-inner">
+                <div class="step">
+                  <div class="step-num">1</div>
+                  <div>
+                    <div class="step-title">Dial *#9900#</div>
+                    <div class="step-desc">Open Phone dialer and enter Samsung service menu code.</div>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-num">2</div>
+                  <div>
+                    <div class="step-title">Run dumpstate/logcat</div>
+                    <div class="step-desc">Tap dumpState/logcat in the SysDump menu and wait.</div>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-num">3</div>
+                  <div>
+                    <div class="step-title">Copy to sdcard</div>
+                    <div class="step-desc">Saves the log file to your internal storage.</div>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-num">4</div>
+                  <div>
+                    <div class="step-title">Grant folder permission</div>
+                    <div class="step-desc">Select the log folder so MyBattery can analyze it.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:center;font-size:11px;color:#48484A;margin-top:-4px;">v2.1.0</div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 2: BATTERY DETAILS SCREEN                        -->
+      <!-- ======================================================= -->
+      <div class="screen-view" id="viewDetails">
+        <div class="details-header">
+          <button class="back-btn" id="btnBackToMain">‹</button>
+          <div style="flex:1;padding-left:6px;">
+            <div class="details-header-title">Battery Details</div>
+            <div class="details-header-sub">dumpstate_G965U · 4 hours ago</div>
+          </div>
+          <button class="copy-dump-btn" id="btnCopyDump">Copy Dump</button>
+        </div>
+
+        <div class="details-content">
+
+          <!-- Section A: Battery Capacity -->
+          <div class="detail-card">
+            <div class="detail-card-title">A. Battery Capacity</div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">ASOC Health Estimate</div>
+                <div class="detail-row-sub">Primary capacity health calculation by Samsung algorithm</div>
+              </div>
+              <div class="detail-row-val" style="color:var(--accent-green);">83%</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">BSOH Health Estimate</div>
+                <div class="detail-row-sub">Secondary hardware health register fallback</div>
+              </div>
+              <div class="detail-row-val">84%</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Charge Counter</div>
+                <div class="detail-row-sub">Instantaneous coulomb charge (2,841,000 µAh), not total design capacity</div>
+              </div>
+              <div class="detail-row-val">2,841 mAh</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Charge Cycles</div>
+                <div class="detail-row-sub">Full charge equivalents</div>
+              </div>
+              <div class="detail-row-val">119 cycles</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">First-Use / Assembly Date</div>
+                <div class="detail-row-sub">Extracted from LLB CAL hardware calibration registers</div>
+              </div>
+              <div class="detail-row-val">15/5/2018 (CAL)</div>
+            </div>
+          </div>
+
+          <!-- Section B: Charging Information -->
+          <div class="detail-card">
+            <div class="detail-card-title">B. Charging Information</div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Current Charging State</div>
+                <div class="detail-row-sub">Live system charging status</div>
+              </div>
+              <div class="detail-row-val">Discharging</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Power Source Detected</div>
+                <div class="detail-row-sub">AC, USB, or Wireless connection status</div>
+              </div>
+              <div class="detail-row-val">Battery (Discharging)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Fast Charging</div>
+                <div class="detail-row-sub">Adaptive Fast Charging (AFC) profile</div>
+              </div>
+              <div class="detail-row-val">Supported / Inactive</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Max Charging Current</div>
+                <div class="detail-row-sub">Peak input current limit</div>
+              </div>
+              <div class="detail-row-val">3,000 mA</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Max Charging Voltage</div>
+                <div class="detail-row-sub">Peak charger rail potential</div>
+              </div>
+              <div class="detail-row-val">5,000 mV</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Battery Protection Threshold</div>
+                <div class="detail-row-sub">Configured charging cap setting</div>
+              </div>
+              <div class="detail-row-val">Limit: 85%</div>
+            </div>
+          </div>
+
+          <!-- Section C: Temperature & Electrical Readings -->
+          <div class="detail-card">
+            <div class="detail-card-title">C. Temperature & Electrical Readings</div>
+            <div class="distinction-banner">
+              Live readings reflect current state at log capture. Peak readings represent lifetime historical maximums recorded by the battery controller.
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Current Temperature <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-sub">Internal thermistor sensor reading</div>
+              </div>
+              <div class="detail-row-val">29.5 °C</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Current Voltage <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-sub">Cell terminal voltage</div>
+              </div>
+              <div class="detail-row-val">4.12 V</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Instantaneous Current <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-sub">Negative when discharging, positive when charging</div>
+              </div>
+              <div class="detail-row-val">-380 mA</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Highest Recorded Temp <span class="tag-peak">HISTORICAL</span></div>
+                <div class="detail-row-sub">mSavedBatteryMaxTemp hardware register</div>
+              </div>
+              <div class="detail-row-val">44.8 °C</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Highest Recorded Current <span class="tag-peak">HISTORICAL</span></div>
+                <div class="detail-row-sub">mSavedBatteryMaxCurrent hardware register</div>
+              </div>
+              <div class="detail-row-val">3,450 mA</div>
+            </div>
+          </div>
+
+          <!-- Section D: Battery Protection -->
+          <div class="detail-card">
+            <div class="detail-card-title">D. Battery Protection</div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Protection Mode</div>
+                <div class="detail-row-sub">Samsung Protect Battery feature</div>
+              </div>
+              <div class="detail-row-val">Enabled (85%)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Protection Threshold</div>
+                <div class="detail-row-sub">Stops charging when reaching limit</div>
+              </div>
+              <div class="detail-row-val">85%</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Battery Presence</div>
+                <div class="detail-row-sub">Hardware sensor connection</div>
+              </div>
+              <div class="detail-row-val">Detected</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Authentication Result</div>
+                <div class="detail-row-sub">Diagnostic hardware flag; unverified states do not imply battery fault</div>
+              </div>
+              <div class="detail-row-val">Passed</div>
+            </div>
+          </div>
+
+          <!-- Section E: Battery Information -->
+          <div class="detail-card">
+            <div class="detail-card-title">E. Battery Information</div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Technology</div>
+                <div class="detail-row-sub">Cell chemistry specification</div>
+              </div>
+              <div class="detail-row-val">Li-ion</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Manufacture Date</div>
+                <div class="detail-row-sub">Calculated from manufacturing register</div>
+              </div>
+              <div class="detail-row-val">15/5/2018</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Diagnostic Timestamp</div>
+                <div class="detail-row-sub">Exact sysdump generation time</div>
+              </div>
+              <div class="detail-row-val">2026-10-22 03:15:00</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-left">
+                <div class="detail-row-label">Log File Name</div>
+                <div class="detail-row-sub">Source log file in /Device/log/</div>
+              </div>
+              <div class="detail-row-val" style="font-size:11px;">dumpstate_G965U.log</div>
+            </div>
+          </div>
+
+          <!-- Section F: Advanced Information -->
+          <div class="detail-card">
+            <div class="detail-card-title">F. Advanced Information</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;">
+              Raw battery registers parsed from dumpstate. Tap any row to copy its key and value.
+            </div>
+            <input type="text" class="raw-search" id="rawSearch" placeholder="Search raw fields...">
+            <div class="raw-list" id="rawList">
+              <div class="raw-row" data-key="mSavedBatteryAsoc" data-val="83">
+                <span class="raw-key">mSavedBatteryAsoc</span>
+                <span class="raw-val">83</span>
+              </div>
+              <div class="raw-row" data-key="mSavedBatteryBsoh" data-val="84">
+                <span class="raw-key">mSavedBatteryBsoh</span>
+                <span class="raw-val">84</span>
+              </div>
+              <div class="raw-row" data-key="mSavedBatteryUsage" data-val="11900">
+                <span class="raw-key">mSavedBatteryUsage</span>
+                <span class="raw-val">11900</span>
+              </div>
+              <div class="raw-row" data-key="mSavedBatteryMaxTemp" data-val="448">
+                <span class="raw-key">mSavedBatteryMaxTemp</span>
+                <span class="raw-val">448</span>
+              </div>
+              <div class="raw-row" data-key="mSavedBatteryMaxCurrent" data-val="3450">
+                <span class="raw-key">mSavedBatteryMaxCurrent</span>
+                <span class="raw-val">3450</span>
+              </div>
+              <div class="raw-row" data-key="level" data-val="83">
+                <span class="raw-key">level</span>
+                <span class="raw-val">83</span>
+              </div>
+              <div class="raw-row" data-key="scale" data-val="100">
+                <span class="raw-key">scale</span>
+                <span class="raw-val">100</span>
+              </div>
+              <div class="raw-row" data-key="voltage" data-val="4120">
+                <span class="raw-key">voltage</span>
+                <span class="raw-val">4120</span>
+              </div>
+              <div class="raw-row" data-key="temperature" data-val="295">
+                <span class="raw-key">temperature</span>
+                <span class="raw-val">295</span>
+              </div>
+              <div class="raw-row" data-key="status" data-val="3">
+                <span class="raw-key">status</span>
+                <span class="raw-val">3</span>
+              </div>
+              <div class="raw-row" data-key="health" data-val="2">
+                <span class="raw-key">health</span>
+                <span class="raw-val">2</span>
+              </div>
+              <div class="raw-row" data-key="technology" data-val="Li-ion">
+                <span class="raw-key">technology</span>
+                <span class="raw-val">Li-ion</span>
+              </div>
+              <div class="raw-row" data-key="Charge counter" data-val="2841000">
+                <span class="raw-key">Charge counter</span>
+                <span class="raw-val">2841000</span>
+              </div>
+              <div class="raw-row" data-key="mBatteryProtection" data-val="1">
+                <span class="raw-key">mBatteryProtection</span>
+                <span class="raw-val">1</span>
+              </div>
+              <div class="raw-row" data-key="mProtectionThreshold" data-val="85">
+                <span class="raw-key">mProtectionThreshold</span>
+                <span class="raw-val">85</span>
+              </div>
+              <div class="raw-row" data-key="mFastCharging" data-val="true">
+                <span class="raw-key">mFastCharging</span>
+                <span class="raw-val">true</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Home bar indicator -->
+      <div class="home-indicator">
+        <div class="home-bar"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Clipboard Toast -->
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+  <script>
+    // Tab and Screen Navigation
+    const tabMain = document.getElementById('tabMain');
+    const tabDetails = document.getElementById('tabDetails');
+    const viewMain = document.getElementById('viewMain');
+    const viewDetails = document.getElementById('viewDetails');
+    const btnGoDetails = document.getElementById('btnGoDetails');
+    const btnBackToMain = document.getElementById('btnBackToMain');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+
+    function showMain() {
+      tabMain.classList.add('active');
+      tabDetails.classList.remove('active');
+      viewMain.classList.add('active-view');
+      viewDetails.classList.remove('active-view');
+    }
+
+    function showDetails() {
+      tabDetails.classList.add('active');
+      tabMain.classList.remove('active');
+      viewDetails.classList.add('active-view');
+      viewMain.classList.remove('active-view');
+    }
+
+    tabMain.addEventListener('click', showMain);
+    tabDetails.addEventListener('click', showDetails);
+    btnGoDetails.addEventListener('click', showDetails);
+    btnBackToMain.addEventListener('click', showMain);
+
+    // Copy dump
+    document.getElementById('btnCopyDump').addEventListener('click', () => {
+      showToast('Full battery dump copied to clipboard');
+    });
+
+    // Copy individual raw field
+    document.querySelectorAll('.raw-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const k = row.getAttribute('data-key');
+        const v = row.getAttribute('data-val');
+        showToast(`Copied ${k}: ${v}`);
+      });
+    });
+
+    // Raw search filter
+    const rawSearch = document.getElementById('rawSearch');
+    const rawRows = document.querySelectorAll('.raw-row');
+    rawSearch.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      rawRows.forEach(row => {
+        const k = row.getAttribute('data-key').toLowerCase();
+        const v = row.getAttribute('data-val').toLowerCase();
+        if (k.includes(q) || v.includes(q)) {
+          row.style.display = 'flex';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    // Collapsible setup toggle
+    const setupToggle = document.getElementById('setupToggle');
+    const setupBody = document.getElementById('setupBody');
+    const setupChevron = document.getElementById('setupChevron');
+    if (setupToggle) {
+      setupToggle.addEventListener('click', () => {
+        const isOpen = setupBody.classList.toggle('open');
+        setupChevron.classList.toggle('open', isOpen);
+      });
+    }
+  </script>
+</body>
+</html>
