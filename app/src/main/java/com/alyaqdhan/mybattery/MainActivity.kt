@@ -358,7 +358,7 @@ private fun BatteryDashboard(
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
-                                    "Skip for concise details only",
+                                    "Skip for essential details only",
                                     color = tp,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                                 )
@@ -368,34 +368,43 @@ private fun BatteryDashboard(
                 }
             }
 
-            // 3. One-Minute Dialog with Wait and Skip options (on top of scrim)
+            // 3. One-Minute bottom sheet with Wait and Skip options (cannot be dismissed)
             androidx.compose.animation.AnimatedVisibility(
                 visible = viewModel.showOneMinuteDialog,
-                enter   = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.95f),
-                exit    = fadeOut(tween(180)) + scaleOut(tween(180), targetScale = 0.95f),
+                enter   = slideInVertically(
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)
+                ) { it } + fadeIn(tween(200)),
+                exit    = slideOutVertically(tween(220)) { it } + fadeOut(tween(180)),
                 modifier = Modifier.fillMaxSize()
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.65f)),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
                     Surface(
-                        shape   = RoundedCornerShape(20.dp),
+                        shape   = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                         color   = Color(0xFF141418),
                         border  = BorderStroke(1.dp, Color(0xFF2E2E36)),
-                        shadowElevation = 16.dp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 28.dp)
+                        shadowElevation = 24.dp,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
-                            modifier = Modifier.padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 28.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            // Handle bar
+                            Box(
+                                Modifier
+                                    .width(40.dp)
+                                    .height(4.dp)
+                                    .background(Color(0xFF3A3A42), RoundedCornerShape(2.dp))
+                            )
+                            Spacer(Modifier.height(20.dp))
                             Text(
-                                "Loading taking longer than usual",
+                                "Log is taking a while",
                                 color = tp,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
@@ -403,12 +412,12 @@ private fun BatteryDashboard(
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Reading this dumpstate log has taken over 1 minute. Would you like to wait for full details, or skip to concise details now?",
+                                "Reading this log has taken over 1 minute. You can wait for the full details, or load only the key battery information now.",
                                 color = textSecondary(),
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp)
                             )
-                            Spacer(Modifier.height(22.dp))
+                            Spacer(Modifier.height(24.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -417,8 +426,8 @@ private fun BatteryDashboard(
                                     onClick = { viewModel.continueWaiting() },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(46.dp),
-                                    shape = RoundedCornerShape(12.dp),
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF1E1E24),
                                         contentColor   = tp
@@ -434,10 +443,10 @@ private fun BatteryDashboard(
                                     onClick = { viewModel.skipToConciseMode() },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(46.dp),
-                                    shape = RoundedCornerShape(12.dp),
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.White,
+                                        containerColor = Color(0xFF00E676),
                                         contentColor   = Color.Black
                                     )
                                 ) {
@@ -656,11 +665,17 @@ private fun LogEntry(
     onSelectEntry: (DocEntry) -> Unit,
     onReadRaw: (DocEntry) -> Unit
 ) {
-    val activeColor = textPrimary()
+    val activeColor = Color(0xFF00E676)
     val displayName = BatteryParser.truncateLogDisplayName(entry.name)
 
     Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp),
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (isActive) Modifier.background(activeColor.copy(alpha = 0.07f))
+                else Modifier
+            )
+            .padding(start = 20.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.size(6.dp).background(if (isActive) activeColor else Color.Transparent, CircleShape))

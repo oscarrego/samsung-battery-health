@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -56,12 +55,12 @@ fun HealthGaugeCard(
     val healthLabel = when {
         isLoadingDetail  -> "Checking battery"
         isUnsupported    -> "Device unsupported"
-        animPct >= 95f   -> "Excellent"
-        animPct >= 90f   -> "Great"
-        animPct >= 80f   -> "Good"
-        animPct >= 70f   -> "Fair"
-        animPct >= 60f   -> "Poor"
-        else             -> "Very poor"
+        animPct >= 95f   -> "Excellent condition"
+        animPct >= 90f   -> "Great condition"
+        animPct >= 80f   -> "Good condition"
+        animPct >= 70f   -> "Fair condition"
+        animPct >= 60f   -> "Poor condition"
+        else             -> "Very poor condition"
     }
 
     val gaugeColor = when {
@@ -220,11 +219,11 @@ fun FullCircleAnimatedGauge(
         )
 
         if (isLoading) {
-            // Spinning full-circle loader
+            // Spinning loading arc: pure green, no teal
             drawArc(
                 color      = arcColor.copy(alpha = breathingAlpha),
                 startAngle = shimmerRotation,
-                sweepAngle = 110f,
+                sweepAngle = 100f,
                 useCenter  = false,
                 topLeft    = arcRect.topLeft,
                 size       = arcRect.size,
@@ -235,25 +234,10 @@ fun FullCircleAnimatedGauge(
             val fullSweep = 360f * clampedProgress
 
             if (fullSweep > 0f) {
-                // Continuous rotating energy gradient brush matching health color
-                val sweepBrush = Brush.sweepGradient(
-                    colors = listOf(
-                        arcColor.copy(alpha = 0.85f),
-                        arcColor,
-                        Color.White.copy(alpha = 0.35f),
-                        arcColor,
-                        arcColor.copy(alpha = 0.85f)
-                    ),
-                    center = centerPoint
-                )
-
-                // Rotate canvas to animate the gradient shimmer continuously along the arc
-                drawContext.canvas.save()
-                drawContext.transform.rotate(degrees = shimmerRotation, pivot = centerPoint)
-
+                // Solid arc using pure health color: no sweep gradient, no teal
                 drawArc(
-                    brush      = sweepBrush,
-                    startAngle = -90f - shimmerRotation,
+                    color      = arcColor.copy(alpha = 0.92f),
+                    startAngle = -90f,
                     sweepAngle = fullSweep,
                     useCenter  = false,
                     topLeft    = arcRect.topLeft,
@@ -261,22 +245,20 @@ fun FullCircleAnimatedGauge(
                     style      = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                 )
 
-                drawContext.canvas.restore()
-
-                // Continuous traveling energy pulse highlight along the arc
-                val pulseSweep = (fullSweep * 0.22f).coerceIn(15f, 50f)
+                // Traveling bright highlight dot along the arc: pure white, sin fade
+                val pulseSweep = (fullSweep * 0.18f).coerceIn(12f, 40f)
                 val pulseStart = -90f + (fullSweep - pulseSweep) * energyPulse
-                val pulseFade = sin(energyPulse * Math.PI.toFloat()).coerceIn(0f, 1f)
+                val pulseFade  = sin(energyPulse * Math.PI.toFloat()).coerceIn(0f, 1f)
 
                 if (pulseFade > 0.05f) {
                     drawArc(
-                        color      = Color.White.copy(alpha = 0.55f * pulseFade),
+                        color      = Color.White.copy(alpha = 0.50f * pulseFade),
                         startAngle = pulseStart,
                         sweepAngle = pulseSweep,
                         useCenter  = false,
                         topLeft    = arcRect.topLeft,
                         size       = arcRect.size,
-                        style      = Stroke(width = strokeWidth * 0.7f, cap = StrokeCap.Round)
+                        style      = Stroke(width = strokeWidth * 0.65f, cap = StrokeCap.Round)
                     )
                 }
             }
@@ -602,11 +584,12 @@ fun ViewBatteryDetailsButton(
                     )
                 )
                 if (isConciseOnly) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "(Concise)",
-                        color = textMuted(),
-                        style = MaterialTheme.typography.labelSmall
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        painter            = painterResource(R.drawable.info),
+                        contentDescription = "Quick view only",
+                        modifier           = Modifier.size(13.dp),
+                        tint               = Color(0xFF8E8E93)
                     )
                 }
             }

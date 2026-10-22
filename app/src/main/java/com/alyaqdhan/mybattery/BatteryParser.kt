@@ -344,6 +344,7 @@ object BatteryParser {
         var insideBatteryService = false
         var batteryServiceSeen   = false
         var insideBatteryBackup  = false
+        var batteryBackupSeen    = false
         var lineIndex            = 0
         var isConciseResult      = conciseOnly
 
@@ -360,6 +361,18 @@ object BatteryParser {
 
                 if (line.isEmpty()) continue
 
+                // Fast early exit: if concise requested and core metrics found
+                if (isConciseResult && (asoc != null || bsoh != null || asocSeen) && usage != null) {
+                    break
+                }
+
+                // If both sections are done or we already got all battery data, stop scanning logcat/dmesg
+                if ((batteryServiceSeen && batteryBackupSeen) ||
+                    (batteryServiceSeen && (asoc != null || bsoh != null || asocSeen) && usage != null && level != null)
+                ) {
+                    break
+                }
+
                 // State tracker for sections
                 if (line.contains("DUMP OF SERVICE battery:")) {
                     insideBatteryService = true
@@ -371,10 +384,10 @@ object BatteryParser {
                 if (insideBatteryService) {
                     if (line.startsWith("DUMP OF SERVICE ") || line.startsWith("--------------------------------------------------")) {
                         insideBatteryService = false
+                        batteryServiceSeen   = true
 
-                        // Once battery service dump concludes and we have core metrics,
-                        // exit immediately without scanning remaining massive logcat/dmesg chunks.
-                        if (asoc != null || bsoh != null || asocSeen || usage != null) {
+                        // Exit immediately if core metrics already parsed
+                        if ((asoc != null || bsoh != null || asocSeen) && usage != null) {
                             break
                         }
                     }
@@ -382,6 +395,7 @@ object BatteryParser {
 
                 if (line.contains("BatteryInfoBackUp")) {
                     insideBatteryBackup  = true
+                    batteryBackupSeen    = true
                     insideBatteryService = false
                     continue
                 }
@@ -389,7 +403,9 @@ object BatteryParser {
                 if (insideBatteryBackup && !line.startsWith(" ") && !line.startsWith("\t")
                     && !line.trimStart().startsWith("m") && !line.trimStart().startsWith("L") && line.isNotBlank()) {
                     insideBatteryBackup = false
-                    if (isConciseResult && (asoc != null || bsoh != null) && usage != null) {
+                    batteryBackupSeen   = true
+
+                    if (batteryServiceSeen || ((asoc != null || bsoh != null || asocSeen) && usage != null)) {
                         break
                     }
                 }

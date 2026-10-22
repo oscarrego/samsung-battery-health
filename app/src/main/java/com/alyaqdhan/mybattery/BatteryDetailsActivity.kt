@@ -574,7 +574,7 @@ private fun AdvancedSection(
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        if (info.isConciseOnly) "Concise mode (raw fields skipped for fast load)"
+                        if (info.isConciseOnly) "Summary mode (raw fields skipped for fast load)"
                         else "${rawEntries.size} raw fields parsed from dumpstate",
                         color = muted,
                         style = MaterialTheme.typography.bodySmall
@@ -634,7 +634,7 @@ private fun AdvancedSection(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    if (info.isConciseOnly) "Concise mode active: detailed raw dump was skipped for faster loading."
+                                    if (info.isConciseOnly) "Fast summary active: raw dump skipped for speed. Tap below to fetch complete data."
                                     else if (rawEntries.isEmpty()) "No raw battery fields available."
                                     else "No fields match \"$searchQuery\"",
                                     color = muted,
