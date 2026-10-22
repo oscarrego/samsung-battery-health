@@ -30,27 +30,43 @@ echo.
 echo [3/3] Updating root APK file...
 if exist "app\build\outputs\apk\debug\app-debug.apk" (
     copy /Y "app\build\outputs\apk\debug\app-debug.apk" "MyBattery-debug.apk" >nul
+    
+    for %%F in ("MyBattery-debug.apk") do set APK_SIZE=%%~zF
+    
+    color 0A
     echo.
     echo ===================================================
     echo  SUCCESS: APK built and updated successfully!
     echo ===================================================
     echo.
-    echo  APK Location: %~dp0MyBattery-debug.apk
+    echo  File:     %~dp0MyBattery-debug.apk
+    echo  Size:     !APK_SIZE! bytes
+    echo  Updated:  %date% %time%
     echo.
+    echo ===================================================
+    echo.
+    echo  [O] Open APK in File Explorer
+    echo  [X] Exit
+    echo.
+    set /p USER_CHOICE="Select an option (O/X) or press Enter to finish: "
+    if /i "!USER_CHOICE!"=="O" (
+        explorer.exe /select,"MyBattery-debug.apk"
+    )
+    goto end
 ) else (
     echo [WARNING] app-debug.apk was not found in app\build\outputs\apk\debug\
     goto fail
 )
 
-goto end
-
 :fail
+color 0C
 echo.
 echo ===================================================
-echo  BUILD FAILED!
+echo  BUILD FAILED! Check the error details above.
 echo ===================================================
 echo.
+pause
+exit /b 1
 
 :end
-echo Press any key to exit...
-pause >nul
+exit /b 0
