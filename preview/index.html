@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyBattery (UI Preview)</title>
+  <title>Battery Health - for Samsung devices (UI Preview)</title>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -815,12 +815,12 @@
     .bottom-nav {
       width: 100%;
       background: #000000;
-      border-top: 1px solid #1A1A1A;
-      border-radius: 24px 24px 0 0;
+      border-top: none;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 10px 24px 8px;
+      padding: 6px 24px 2px;
       box-sizing: border-box;
       margin-top: auto;
     }
@@ -831,8 +831,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 52px;
-      height: 52px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       cursor: pointer;
       color: #FFFFFF;
@@ -846,8 +846,8 @@
       opacity: 0.7;
     }
     .nav-icon {
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
     }
 
     /* Bottom Log Sheet Modal */
@@ -869,9 +869,9 @@
     }
     .log-sheet-card {
       width: 100%;
-      background: #131317;
-      border-top: 1px solid #26262E;
-      border-radius: 26px 26px 0 0;
+      background: #000000;
+      border-top: 1px solid #1A1A1A;
+      border-radius: 24px 24px 0 0;
       padding: 12px 18px 24px;
       box-sizing: border-box;
       animation: slideUp 0.28s cubic-bezier(0, 0, 0.2, 1);
@@ -883,7 +883,7 @@
     .log-sheet-handle {
       width: 38px;
       height: 4px;
-      background: #383842;
+      background: #2C2C2C;
       border-radius: 2px;
       margin: 0 auto 10px;
     }
@@ -893,7 +893,7 @@
       justify-content: space-between;
       margin-bottom: 12px;
       padding-bottom: 10px;
-      border-bottom: 1px solid #24242C;
+      border-bottom: 1px solid #1A1A1A;
     }
     .log-sheet-title {
       font-size: 15px;
@@ -912,7 +912,7 @@
       border-radius: 8px;
     }
     .log-sheet-close {
-      background: #1E1E24;
+      background: #141414;
       border: none;
       color: var(--text-secondary);
       width: 28px;
@@ -929,7 +929,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px 8px;
-      border-bottom: 1px solid #1E1E24;
+      border-bottom: 1px solid #141414;
       border-radius: 8px;
       cursor: pointer;
       transition: background 0.12s;
@@ -999,7 +999,8 @@
         <!-- Header -->
         <div class="app-header">
           <div class="header-center">
-            <span class="header-title">My Battery</span>
+            <span class="header-title">Battery Health</span>
+            <span class="header-indicator" style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px;">for Samsung devices</span>
             <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago · Installed 15/5/2018</span>
           </div>
         </div>
@@ -1115,7 +1116,7 @@
                   <div class="step-num">4</div>
                   <div>
                     <div class="step-title">Grant folder permission</div>
-                    <div class="step-desc">Select the log folder so MyBattery can analyze it.</div>
+                    <div class="step-desc">Select the log folder so Battery Health can analyze it.</div>
                   </div>
                 </div>
               </div>

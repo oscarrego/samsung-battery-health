@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
-title MyBattery - 1-Tap APK Builder
+title Battery Health - 1-Tap APK Builder
 cd /d "%~dp0"
 
 echo ===================================================
-echo           MyBattery APK One-Tap Builder
+echo        Battery Health APK One-Tap Builder
 echo ===================================================
 echo.
 echo [1/3] Checking environment...
@@ -29,9 +29,10 @@ if errorlevel 1 (
 echo.
 echo [3/3] Updating root APK file...
 if exist "app\build\outputs\apk\debug\app-debug.apk" (
+    copy /Y "app\build\outputs\apk\debug\app-debug.apk" "BatteryHealth-debug.apk" >nul
     copy /Y "app\build\outputs\apk\debug\app-debug.apk" "MyBattery-debug.apk" >nul
     
-    for %%F in ("MyBattery-debug.apk") do set APK_SIZE=%%~zF
+    for %%F in ("BatteryHealth-debug.apk") do set APK_SIZE=%%~zF
     
     color 0A
     echo.
@@ -39,7 +40,7 @@ if exist "app\build\outputs\apk\debug\app-debug.apk" (
     echo  SUCCESS: APK built and updated successfully!
     echo ===================================================
     echo.
-    echo  File:     %~dp0MyBattery-debug.apk
+    echo  File:     %~dp0BatteryHealth-debug.apk
     echo  Size:     !APK_SIZE! bytes
     echo  Updated:  %date% %time%
     echo.
@@ -50,7 +51,7 @@ if exist "app\build\outputs\apk\debug\app-debug.apk" (
     echo.
     set /p USER_CHOICE="Select an option (O/X) or press Enter to finish: "
     if /i "!USER_CHOICE!"=="O" (
-        explorer.exe /select,"MyBattery-debug.apk"
+        explorer.exe /select,"BatteryHealth-debug.apk"
     )
     goto end
 ) else (

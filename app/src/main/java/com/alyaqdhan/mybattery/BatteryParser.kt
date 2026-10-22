@@ -353,8 +353,8 @@ object BatteryParser {
                 val line = reader.readLine() ?: break
                 lineIndex++
 
-                // Cooperative cancellation check every 128 lines for instant UI responsiveness
-                if (lineIndex % 128 == 0 && isCancelled()) {
+                // Cooperative cancellation check every 256 lines for instant UI responsiveness
+                if (lineIndex % 256 == 0 && isCancelled()) {
                     isConciseResult = true
                     break
                 }
@@ -366,11 +366,17 @@ object BatteryParser {
                     break
                 }
 
-                // If both sections are done or we already got all battery data, stop scanning logcat/dmesg
-                if ((batteryServiceSeen && batteryBackupSeen) ||
-                    (batteryServiceSeen && (asoc != null || bsoh != null || asocSeen) && usage != null && level != null)
-                ) {
-                    break
+                // For full scan: stop when entering huge system/event/radio/kernel logcat sections,
+                // provided we already passed the battery service or found battery data.
+                if (!isConciseResult && (batteryServiceSeen || batteryBackupSeen || asoc != null || usage != null)) {
+                    if (line.startsWith("------ SYSTEM LOG") ||
+                        line.startsWith("------ EVENT LOG") ||
+                        line.startsWith("------ RADIO LOG") ||
+                        line.startsWith("------ KERNEL LOG") ||
+                        line.startsWith("== dumpstate: done")
+                    ) {
+                        break
+                    }
                 }
 
                 // State tracker for sections
@@ -382,12 +388,16 @@ object BatteryParser {
                 }
 
                 if (insideBatteryService) {
-                    if (line.startsWith("DUMP OF SERVICE ") || line.startsWith("--------------------------------------------------")) {
+                    if (line.startsWith("DUMP OF SERVICE ") && !line.startsWith("DUMP OF SERVICE battery:")) {
                         insideBatteryService = false
                         batteryServiceSeen   = true
-
-                        // Exit immediately if core metrics already parsed
-                        if ((asoc != null || bsoh != null || asocSeen) && usage != null) {
+                        if (isConciseResult && (asoc != null || bsoh != null || asocSeen) && usage != null) {
+                            break
+                        }
+                    } else if (line.startsWith("------ ") && !line.contains("battery", ignoreCase = true)) {
+                        insideBatteryService = false
+                        batteryServiceSeen   = true
+                        if (isConciseResult && (asoc != null || bsoh != null || asocSeen) && usage != null) {
                             break
                         }
                     }
@@ -400,20 +410,22 @@ object BatteryParser {
                     continue
                 }
 
-                if (insideBatteryBackup && !line.startsWith(" ") && !line.startsWith("\t")
-                    && !line.trimStart().startsWith("m") && !line.trimStart().startsWith("L") && line.isNotBlank()) {
-                    insideBatteryBackup = false
-                    batteryBackupSeen   = true
-
-                    if (batteryServiceSeen || ((asoc != null || bsoh != null || asocSeen) && usage != null)) {
-                        break
+                if (insideBatteryBackup) {
+                    if ((line.startsWith("------ ") || line.startsWith("DUMP OF SERVICE ")) ||
+                        (!line.startsWith(" ") && !line.startsWith("\t") && !line.trimStart().startsWith("m") &&
+                         !line.trimStart().startsWith("L") && !line.trimStart().startsWith("B") && line.isNotBlank())) {
+                        insideBatteryBackup = false
+                        batteryBackupSeen   = true
+                        if (isConciseResult && (asoc != null || bsoh != null || asocSeen) && usage != null) {
+                            break
+                        }
                     }
                 }
 
                 // Collect raw dump entries and parse values inside either battery block
                 if (insideBatteryService || insideBatteryBackup) {
                     val t = line.trim()
-                    if (t.contains(":") && !t.startsWith("[") && !t.startsWith("=") && !t.startsWith("-") && t.length < 120) {
+                    if (t.contains(":") && !t.startsWith("[") && !t.startsWith("=") && !t.startsWith("-") && t.length < 200) {
                         val key = t.substringBefore(":").trim()
                         val value = t.substringAfter(":").trim()
                         if (key.isNotEmpty() && value.isNotEmpty() && !isConciseResult) {
@@ -596,40 +608,54 @@ object BatteryParser {
                                 authResult = "Passed"
                         }
                     }
-                } else {
-                    // Lines outside battery service: only inspect for dates/timestamps and fallback registers
-                    if (batteryDateMs == 0L && (line.startsWith("LLB") || line.contains("LLB "))) {
-                        llbRegex.find(line.trim())?.let { m ->
-                            llbType        = m.groupValues[1].uppercase()
-                            batteryDateMs = try {
-                                compactDateFmt.parse(m.groupValues[2])?.time ?: 0L
-                            } catch (_: Exception) { 0L }
+                }
+
+                // Check calibration date anywhere in the file
+                if (batteryDateMs == 0L && (line.startsWith("LLB") || line.contains("LLB "))) {
+                    llbRegex.find(line.trim())?.let { m ->
+                        llbType        = m.groupValues[1].uppercase()
+                        batteryDateMs = try {
+                            compactDateFmt.parse(m.groupValues[2])?.time ?: 0L
+                        } catch (_: Exception) { 0L }
+                    }
+                }
+
+                // Check dump timestamp anywhere in the file
+                if (logTimestampMs == 0L && (line.startsWith("==") || line.startsWith("dumpstate:") || line.startsWith("["))) {
+                    val t = line.trim()
+                    fullDateTimeRegex.find(t)?.let { m ->
+                        logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
+                    } ?: bracketDateTimeRegex.find(t)?.let { m ->
+                        logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
+                    }
+                }
+
+                // Fallback register check outside battery service
+                if (!insideBatteryService && !insideBatteryBackup && line.contains("mSavedBattery")) {
+                    if (line.contains("mSavedBatteryAsoc:")) {
+                        asocSeen = true
+                        asocRaw  = line.substringAfter("mSavedBatteryAsoc:").trim()
+                        asoc     = extractValueOrNull(line, "mSavedBatteryAsoc:")
+                    }
+                    if (line.contains("mSavedBatteryBsoh:")) {
+                        bsohRaw = line.substringAfter("mSavedBatteryBsoh:").trim()
+                        bsoh    = extractValueOrNull(line, "mSavedBatteryBsoh:")
+                    }
+                    if (line.contains("mSavedBatteryUsage:")) {
+                        usageRaw = line.substringAfter("mSavedBatteryUsage:").trim()
+                        val raw  = extractValueOrNull(line, "mSavedBatteryUsage:")
+                        usage    = if (raw != null) raw / 100 else null
+                    }
+                    if (maxRecordedTempC == null && line.contains("mSavedBatteryMaxTemp:")) {
+                        val rawMaxT = extractValueOrNull(line, "mSavedBatteryMaxTemp:")
+                        if (rawMaxT != null && rawMaxT > 0) {
+                            maxRecordedTempC = if (rawMaxT > 100) rawMaxT / 10f else rawMaxT.toFloat()
                         }
                     }
-
-                    if (logTimestampMs == 0L && (line.startsWith("==") || line.startsWith("dumpstate:") || line.startsWith("["))) {
-                        val t = line.trim()
-                        fullDateTimeRegex.find(t)?.let { m ->
-                            logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
-                        } ?: bracketDateTimeRegex.find(t)?.let { m ->
-                            logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
-                        }
-                    }
-
-                    if (line.contains("mSavedBattery")) {
-                        if (line.contains("mSavedBatteryAsoc:")) {
-                            asocSeen = true
-                            asocRaw  = line.substringAfter("mSavedBatteryAsoc:").trim()
-                            asoc     = extractValueOrNull(line, "mSavedBatteryAsoc:")
-                        }
-                        if (line.contains("mSavedBatteryBsoh:")) {
-                            bsohRaw = line.substringAfter("mSavedBatteryBsoh:").trim()
-                            bsoh    = extractValueOrNull(line, "mSavedBatteryBsoh:")
-                        }
-                        if (line.contains("mSavedBatteryUsage:")) {
-                            usageRaw = line.substringAfter("mSavedBatteryUsage:").trim()
-                            val raw  = extractValueOrNull(line, "mSavedBatteryUsage:")
-                            usage    = if (raw != null) raw / 100 else null
+                    if (maxRecordedCurrentMa == null && line.contains("mSavedBatteryMaxCurrent:")) {
+                        val rawMaxI = extractValueOrNull(line, "mSavedBatteryMaxCurrent:")
+                        if (rawMaxI != null && rawMaxI > 0) {
+                            maxRecordedCurrentMa = rawMaxI
                         }
                     }
                 }

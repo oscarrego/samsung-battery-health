@@ -101,6 +101,13 @@ private fun BatteryDetailsScreen(
     LaunchedEffect(Unit) { shown = true }
     val alpha by animateFloatAsState(if (shown) 1f else 0f, tween(300), label = "details_fade")
 
+    // Automatically load full dump and precise fields if currently in concise mode
+    LaunchedEffect(info.logFileName, info.isConciseOnly) {
+        if (info.isConciseOnly || (info.rawBatteryDumpText.isBlank() && info.readSuccess)) {
+            viewModel.loadFullDetails()
+        }
+    }
+
     var rawSearchQuery by remember { mutableStateOf("") }
     var isAdvancedExpanded by remember { mutableStateOf(false) }
 

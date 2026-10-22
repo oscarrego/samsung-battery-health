@@ -173,9 +173,9 @@ private fun SetupScreen(
                     }
                     Spacer(Modifier.width(14.dp))
                     Column {
-                        Text("My Battery", color = tp,
+                        Text("Battery Health", color = tp,
                             style = MaterialTheme.typography.titleLarge)
-                        Text("Samsung log reader", color = ts,
+                        Text("for Samsung devices", color = ts,
                             style = MaterialTheme.typography.bodySmall)
                     }
                 }

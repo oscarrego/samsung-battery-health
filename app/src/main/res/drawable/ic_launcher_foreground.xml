@@ -1,15 +1,29 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="960"
-    android:viewportHeight="960"
-    android:tint="#000000">
-  <group android:scaleX="0.58"
-      android:scaleY="0.58"
-      android:translateX="201.6"
-      android:translateY="201.6">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Battery Top Terminal / Cap -->
     <path
-        android:fillColor="@android:color/white"
-        android:pathData="M160,720Q110,720 75,685Q40,650 40,600L40,360Q40,310 75,275Q110,240 160,240L700,240Q750,240 785,275Q820,310 820,360L820,600Q820,650 785,685Q750,720 700,720L160,720ZM160,640L700,640Q717,640 728.5,628.5Q740,617 740,600L740,360Q740,343 728.5,331.5Q717,320 700,320L160,320Q143,320 131.5,331.5Q120,343 120,360L120,600Q120,617 131.5,628.5Q143,640 160,640ZM860,580L860,380L880,380Q897,380 908.5,391.5Q920,403 920,420L920,540Q920,557 908.5,568.5Q897,580 880,580L860,580ZM160,600L160,360L700,360L700,600L160,600Z"/>
-  </group>
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,26 h12 a2,2 0 0,1 2,2 v3 h-16 v-3 a2,2 0 0,1 2,-2 z" />
+
+    <!-- Battery Outer Frame -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M42,31 h24 a6,6 0 0,1 6,6 v38 a6,6 0 0,1 -6,6 h-24 a6,6 0 0,1 -6,-6 v-38 a6,6 0 0,1 6,-6 z" />
+
+    <!-- Battery Level Base Tint -->
+    <path
+        android:fillColor="#2200E676"
+        android:pathData="M39,54 h30 v21 a3,3 0 0,1 -3,3 h-24 a3,3 0 0,1 -3,-3 z" />
+
+    <!-- Electric Green Health Energy Bolt (#00E676) -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M56,38 L46,53 L53,53 L49,69 L62,51 L55,51 Z" />
 </vector>

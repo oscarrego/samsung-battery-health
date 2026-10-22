@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -183,8 +184,13 @@ private fun BatteryDashboard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "My Battery", color = tp,
+                        "Battery Health", color = tp,
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "for Samsung devices", color = muted,
+                        style = MaterialTheme.typography.labelSmall
                     )
                     Spacer(Modifier.height(4.dp))
                     if (isLoadingDetail) {
@@ -440,15 +446,14 @@ private fun BottomNavBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape    = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        color    = Color.Black,
-        border   = BorderStroke(1.dp, Color(0xFF1A1A1A))
+        shape    = RectangleShape,
+        color    = Color.Black
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 0.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment     = Alignment.CenterVertically
         ) {
@@ -501,14 +506,14 @@ private fun BottomNavIconButton(
             enabled  = enabled,
             shape    = CircleShape,
             color    = Color.Transparent,
-            modifier = Modifier.size(54.dp)
+            modifier = Modifier.size(56.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter            = painterResource(icon),
                     contentDescription = contentDescription,
                     tint               = iconTint,
-                    modifier           = Modifier.size(26.dp)
+                    modifier           = Modifier.size(30.dp)
                 )
             }
         }
@@ -531,10 +536,10 @@ private fun LogSheet(
             .fillMaxWidth()
             .clickable(onClick = {}, indication = null,
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }),
-        color           = Color(0xFF131317),
-        border          = BorderStroke(1.dp, Color(0xFF26262E)),
+        color           = Color.Black,
+        border          = BorderStroke(1.dp, Color(0xFF1A1A1A)),
         shadowElevation = 16.dp,
-        shape           = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
+        shape           = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             Modifier
@@ -547,7 +552,7 @@ private fun LogSheet(
                     .padding(top = 12.dp, bottom = 4.dp)
                     .width(38.dp)
                     .height(4.dp)
-                    .background(Color(0xFF383842), RoundedCornerShape(2.dp))
+                    .background(Color(0xFF2C2C2C), RoundedCornerShape(2.dp))
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -582,7 +587,7 @@ private fun LogSheet(
                     onClick  = onDismiss,
                     modifier = Modifier.size(32.dp),
                     colors   = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = Color(0xFF1E1E24),
+                        containerColor = Color(0xFF141414),
                         contentColor   = textSecondary()
                     )
                 ) {
@@ -596,7 +601,7 @@ private fun LogSheet(
 
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                color    = Color(0xFF24242C)
+                color    = Color(0xFF1A1A1A)
             )
 
             val logsScrollState = rememberScrollState()
@@ -748,7 +753,8 @@ private fun LogEntry(
             onClick  = { onReadRaw(entry) },
             modifier = Modifier.size(40.dp),
             shape    = RoundedCornerShape(10.dp),
-            color    = MaterialTheme.colorScheme.surfaceContainerHighest
+            color    = Color(0xFF141414),
+            border   = BorderStroke(0.5.dp, Color(0xFF222222))
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(

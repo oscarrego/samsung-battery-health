@@ -1,5 +1,5 @@
 {
-  "name": "mybattery-preview",
+  "name": "battery-health-preview",
   "version": "1.0.0",
   "scripts": {
     "dev": "vite --open",

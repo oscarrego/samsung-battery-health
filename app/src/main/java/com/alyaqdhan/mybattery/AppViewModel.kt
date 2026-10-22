@@ -153,9 +153,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     errorDialog = ErrorDialog.FolderDeleted
                     return@launch
                 }
-                if (latestEntry.name != cached.logFileName) {
+                if (latestEntry.name != cached.logFileName || cached.isConciseOnly) {
                     val liveInfo = withContext(Dispatchers.IO) {
-                        BatteryParser.parseLatestLog(savedUri, context, prefs, isCancelled = { cancelFullScanRequested })
+                        BatteryParser.parseLatestLog(savedUri, context, prefs, isCancelled = { cancelFullScanRequested }, conciseOnly = false)
                     }
                     if (liveInfo.readSuccess) batteryInfo = liveInfo
                 }
@@ -353,18 +353,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun selectLogEntry(entry: DocEntry) {
         val uri = folderUri ?: return
         viewModelScope.launch {
+            cancelFullScanRequested = false
             isLoadingDetail = true
             startLoadingTimeout()
             showLogSheet    = false
             startGaugePulse()
             val parsed = withContext(Dispatchers.IO) {
-                BatteryParser.parseLogEntry(uri, entry, context, isCancelled = { cancelFullScanRequested })
+                BatteryParser.parseLogEntry(uri, entry, context, isCancelled = { cancelFullScanRequested }, conciseOnly = false)
             }
             stopLoadingTimeout()
             isLoadingDetail = false
             if (parsed.readSuccess) {
                 batteryInfo      = parsed
                 folderAccessible = true
+                BatteryCache.cacheBatteryInfo(prefs, parsed)
             }
         }
     }
@@ -375,16 +377,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun loadFullDetails() {
         val uri = folderUri ?: return
         viewModelScope.launch {
+            cancelFullScanRequested = false
             isLoadingDetail = true
             startLoadingTimeout()
+            val currentFileName = batteryInfo?.logFileName
             val info = withContext(Dispatchers.IO) {
-                BatteryParser.parseLatestLog(uri, context, prefs, isCancelled = { cancelFullScanRequested }, conciseOnly = false)
+                if (!currentFileName.isNullOrEmpty()) {
+                    val matchingEntry = allLogEntries.find { it.name == currentFileName }
+                        ?: BatteryParser.listAllLogs(uri, context).find { it.name == currentFileName }
+                    if (matchingEntry != null) {
+                        return@withContext BatteryParser.parseLogEntry(uri, matchingEntry, context, conciseOnly = false)
+                    }
+                }
+                BatteryParser.parseLatestLog(uri, context, prefs, conciseOnly = false)
             }
             stopLoadingTimeout()
             isLoadingDetail = false
             if (info.readSuccess) {
                 batteryInfo   = info
                 isConciseMode = false
+                BatteryCache.cacheBatteryInfo(prefs, info)
             }
         }
     }

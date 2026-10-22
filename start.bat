@@ -1,8 +1,8 @@
 @echo off
-title MyBattery UI Preview
+title Battery Health UI Preview
 cd /d "%~dp0preview"
 echo.
-echo  MyBattery UI Preview
+echo  Battery Health UI Preview
 echo  Starting Vite dev server...
 echo.
 
