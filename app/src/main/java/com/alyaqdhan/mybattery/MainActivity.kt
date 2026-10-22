@@ -274,7 +274,7 @@ private fun BatteryDashboard(
                     }
                 }
                 // Extra bottom padding so content clears the bottom nav bar
-                Spacer(Modifier.height(96.dp))
+                Spacer(Modifier.height(76.dp))
             }
         }
 
@@ -442,6 +442,10 @@ private fun BottomNavBar(
     onRunDiagnostics: () -> Unit,
     onOpenGuide: () -> Unit
 ) {
+    val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    // Balanced bottom inset: not too low against the edge, not elevated high
+    val effectiveBottom = (navBarBottom - 6.dp).coerceAtLeast(6.dp)
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape    = RectangleShape,
@@ -450,8 +454,7 @@ private fun BottomNavBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 0.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = effectiveBottom),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment     = Alignment.CenterVertically
         ) {
@@ -504,14 +507,16 @@ private fun BottomNavIconButton(
             enabled  = enabled,
             shape    = CircleShape,
             color    = Color.Transparent,
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier
+                .width(56.dp)
+                .height(48.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter            = painterResource(icon),
                     contentDescription = contentDescription,
                     tint               = iconTint,
-                    modifier           = Modifier.size(30.dp)
+                    modifier           = Modifier.size(29.dp)
                 )
             }
         }
