@@ -12,6 +12,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,6 +30,55 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var hasEverScanned   by mutableStateOf(false)                ; private set
     var isRefreshing     by mutableStateOf(false)                ; private set
     var isLoadingDetail  by mutableStateOf(false)                ; private set
+
+    // Fast concise skipping state
+    var showTakingTooLong   by mutableStateOf(false) ; private set
+    var showOneMinuteDialog by mutableStateOf(false) ; private set
+    var isConciseMode       by mutableStateOf(false) ; private set
+    @Volatile private var cancelFullScanRequested = false
+    private var loadingTimeoutJob: Job? = null
+
+    private fun startLoadingTimeout() {
+        loadingTimeoutJob?.cancel()
+        cancelFullScanRequested = false
+        showTakingTooLong = false
+        showOneMinuteDialog = false
+        loadingTimeoutJob = viewModelScope.launch {
+            delay(3500) // Offer skip button if loading takes over 3.5 seconds
+            if (isLoadingDetail) {
+                showTakingTooLong = true
+            }
+            delay(56500) // Total 60 seconds (1 minute): prompt user with Wait / Skip
+            if (isLoadingDetail) {
+                showOneMinuteDialog = true
+            }
+        }
+    }
+
+    private fun stopLoadingTimeout() {
+        loadingTimeoutJob?.cancel()
+        loadingTimeoutJob = null
+        showTakingTooLong = false
+        showOneMinuteDialog = false
+    }
+
+    fun continueWaiting() {
+        showOneMinuteDialog = false
+        loadingTimeoutJob?.cancel()
+        loadingTimeoutJob = viewModelScope.launch {
+            delay(60000) // If it takes another full minute, re-prompt
+            if (isLoadingDetail) {
+                showOneMinuteDialog = true
+            }
+        }
+    }
+
+    fun skipToConciseMode() {
+        cancelFullScanRequested = true
+        isConciseMode = true
+        showTakingTooLong = false
+        showOneMinuteDialog = false
+    }
 
     // Log sheet
     var allLogEntries  by mutableStateOf<List<DocEntry>>(emptyList()) ; private set
@@ -88,6 +138,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
             alreadyHasPerm  = true
             isLoadingDetail = true
+            startLoadingTimeout()
 
             val cached = BatteryCache.loadCachedBatteryInfo(prefs)
             if (cached != null) {
@@ -100,6 +151,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (latestEntry == null) {
                     folderAccessible = false
+                    stopLoadingTimeout()
                     isLoadingDetail  = false
                     gaugeReplayKey++
                     errorDialog = ErrorDialog.FolderDeleted
@@ -107,10 +159,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (latestEntry.name != cached.logFileName) {
                     val liveInfo = withContext(Dispatchers.IO) {
-                        BatteryParser.parseLatestLog(savedUri, context, prefs)
+                        BatteryParser.parseLatestLog(savedUri, context, prefs, isCancelled = { cancelFullScanRequested })
                     }
                     if (liveInfo.readSuccess) batteryInfo = liveInfo
                 }
+                stopLoadingTimeout()
                 isLoadingDetail = false
 
             } else {
@@ -118,14 +171,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     BatteryParser.findLatestLogEntry(savedUri, context)
                 }
                 if (latestEntry == null) {
+                    stopLoadingTimeout()
                     isLoadingDetail  = false
                     folderAccessible = false
                     errorDialog = ErrorDialog.FolderDeleted
                     return@launch
                 }
                 val info = withContext(Dispatchers.IO) {
-                    BatteryParser.smartScan(savedUri, context, prefs)
+                    BatteryParser.smartScan(savedUri, context, prefs, isCancelled = { cancelFullScanRequested })
                 }
+                stopLoadingTimeout()
                 isLoadingDetail  = false
                 batteryInfo      = info
                 folderAccessible = true
@@ -190,10 +245,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             // The scan continues in the background; the Dashboard shows isLoadingDetail.
             prefs.edit { putString("folder_uri", uri.toString()) }
             onResult(true)
+            startLoadingTimeout()
 
             val info = withContext(Dispatchers.IO) {
-                BatteryParser.smartScan(uri, context, prefs)
+                BatteryParser.smartScan(uri, context, prefs, isCancelled = { cancelFullScanRequested })
             }
+            stopLoadingTimeout()
             isLoadingDetail = false
 
             if (info.readSuccess) {
@@ -262,9 +319,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
             // New file appeared, or loaded file was deleted: parse latest
             isLoadingDetail = true
+            startLoadingTimeout()
             val info = withContext(Dispatchers.IO) {
-                BatteryParser.parseLatestLog(uri, context, prefs)
+                BatteryParser.parseLatestLog(uri, context, prefs, isCancelled = { cancelFullScanRequested })
             }
+            stopLoadingTimeout()
             isRefreshing    = false
             isLoadingDetail = false
             if (info.readSuccess) {
@@ -299,13 +358,37 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val uri = folderUri ?: return
         viewModelScope.launch {
             isLoadingDetail = true
+            startLoadingTimeout()
             showLogSheet    = false
             startGaugePulse()
-            val parsed = withContext(Dispatchers.IO) { BatteryParser.parseLogEntry(uri, entry, context) }
+            val parsed = withContext(Dispatchers.IO) {
+                BatteryParser.parseLogEntry(uri, entry, context, isCancelled = { cancelFullScanRequested })
+            }
+            stopLoadingTimeout()
             isLoadingDetail = false
             if (parsed.readSuccess) {
                 batteryInfo      = parsed
                 folderAccessible = true
+            }
+        }
+    }
+
+    /**
+     * Loads the full raw dump on demand if concise mode was activated.
+     */
+    fun loadFullDetails() {
+        val uri = folderUri ?: return
+        viewModelScope.launch {
+            isLoadingDetail = true
+            startLoadingTimeout()
+            val info = withContext(Dispatchers.IO) {
+                BatteryParser.parseLatestLog(uri, context, prefs, isCancelled = { cancelFullScanRequested }, conciseOnly = false)
+            }
+            stopLoadingTimeout()
+            isLoadingDetail = false
+            if (info.readSuccess) {
+                batteryInfo   = info
+                isConciseMode = false
             }
         }
     }

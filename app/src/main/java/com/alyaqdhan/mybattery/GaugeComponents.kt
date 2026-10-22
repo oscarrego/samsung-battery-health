@@ -52,23 +52,24 @@ fun HealthGaugeCard(
     }
 
     val animPct = arcAnimatable.value * 100f
-    val gaugeColor = gaugeGreen()
 
-    val currentLabel = when {
-        isLoadingDetail  -> "Loading"
-        isUnsupported    -> "Unsupported"
-        animPct >= 99.9f -> "New"
-        animPct >= 80f   -> "Good"
-        animPct >= 60f   -> "Fair"
-        else             -> "Poor"
-    }
-    val pillMsg = when {
-        isLoadingDetail  -> "Scanning log..."
+    val healthLabel = when {
+        isLoadingDetail  -> "Checking battery"
         isUnsupported    -> "Device unsupported"
-        animPct >= 99.9f -> "The phone is as fresh as it gets"
-        animPct >= 80f   -> "Battery is in great condition"
-        animPct >= 60f   -> "Battery capacity is declining"
-        else             -> "Battery replacement recommended"
+        animPct >= 95f   -> "Excellent"
+        animPct >= 90f   -> "Great"
+        animPct >= 80f   -> "Good"
+        animPct >= 70f   -> "Fair"
+        animPct >= 60f   -> "Poor"
+        else             -> "Very poor"
+    }
+
+    val gaugeColor = when {
+        isLoadingDetail || isUnsupported -> Color(0xFF00E676)
+        animPct >= 80f                   -> Color(0xFF00E676) // Green
+        animPct >= 70f                   -> Color(0xFFFFB300) // Amber
+        animPct >= 60f                   -> Color(0xFFFF9100) // Orange
+        else                             -> Color(0xFFFF5252) // Red
     }
 
     val muted  = textMuted()
@@ -89,8 +90,11 @@ fun HealthGaugeCard(
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     "BATTERY HEALTH",
-                    color = muted,
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp)
+                    color = tp,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.5.sp
+                    )
                 )
                 if (!isLoadingDetail && !isUnsupported && info.healthSource == "bsoh") {
                     Text(
@@ -118,18 +122,14 @@ fun HealthGaugeCard(
                     arcColor   = gaugeColor,
                     modifier   = Modifier.fillMaxSize()
                 )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        if (isLoadingDetail || isUnsupported) "--" else "${animPct.toInt()}%",
-                        color = tp,
-                        style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)
+                Text(
+                    if (isLoadingDetail || isUnsupported) "--" else "${animPct.toInt()}%",
+                    color = tp,
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-1).sp
                     )
-                    Text(
-                        currentLabel,
-                        color = ts,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-                    )
-                }
+                )
             }
 
             Spacer(Modifier.height(20.dp))
@@ -140,7 +140,7 @@ fun HealthGaugeCard(
                 border = BorderStroke(1.dp, Color(0xFF242428))
             ) {
                 Text(
-                    pillMsg,
+                    healthLabel,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     color    = ts,
                     style    = MaterialTheme.typography.labelMedium
@@ -235,14 +235,14 @@ fun FullCircleAnimatedGauge(
             val fullSweep = 360f * clampedProgress
 
             if (fullSweep > 0f) {
-                // Continuous rotating energy gradient brush
+                // Continuous rotating energy gradient brush matching health color
                 val sweepBrush = Brush.sweepGradient(
                     colors = listOf(
-                        Color(0xFF00C853),
-                        Color(0xFF00E676),
-                        Color(0xFF69F0AE),
-                        Color(0xFF00E676),
-                        Color(0xFF00C853)
+                        arcColor.copy(alpha = 0.85f),
+                        arcColor,
+                        Color.White.copy(alpha = 0.35f),
+                        arcColor,
+                        arcColor.copy(alpha = 0.85f)
                     ),
                     center = centerPoint
                 )
@@ -270,7 +270,7 @@ fun FullCircleAnimatedGauge(
 
                 if (pulseFade > 0.05f) {
                     drawArc(
-                        color      = Color(0xFFE8FFE8).copy(alpha = 0.65f * pulseFade),
+                        color      = Color.White.copy(alpha = 0.55f * pulseFade),
                         startAngle = pulseStart,
                         sweepAngle = pulseSweep,
                         useCenter  = false,
@@ -338,14 +338,17 @@ fun CycleCountCard(
             Column {
                 Text(
                     "CHARGE CYCLES",
-                    color = muted,
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp)
+                    color = tp,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     if (isUnsupported && !isLoadingDetail) "Not reported by device"
                     else "Full charge equivalents",
-                    color = onSurfV,
+                    color = muted,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -418,7 +421,7 @@ fun CycleCountCard(
 
 /**
  * Section 3 -- Quick Battery Information card.
- * Displays level, temperature, voltage, and charging status in a 2x2 grid.
+ * Displays level, temperature, and voltage in a clean 3-metric layout.
  */
 @Composable
 fun QuickBatteryInfoCard(
@@ -426,7 +429,6 @@ fun QuickBatteryInfoCard(
     isLoading: Boolean = false
 ) {
     val muted   = textMuted()
-    val onSurfV = MaterialTheme.colorScheme.onSurfaceVariant
     val border  = cardBorderColor()
     val tp      = textPrimary()
     val ts      = textSecondary()
@@ -449,20 +451,6 @@ fun QuickBatteryInfoCard(
         else -> "--"
     }
 
-    val statusText = when {
-        isLoading -> "--"
-        info.status.isNotBlank() -> info.status
-        else -> "--"
-    }
-
-    val statusSubText = when {
-        isLoading -> "Checking status"
-        info.powerSourceSummary.isNotBlank() && info.powerSourceSummary != info.status -> info.powerSourceSummary
-        info.status.equals("Charging", ignoreCase = true) -> "Power connected"
-        info.status.equals("Discharging", ignoreCase = true) -> "On battery power"
-        else -> "Battery state"
-    }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(20.dp),
@@ -473,75 +461,57 @@ fun QuickBatteryInfoCard(
             Column {
                 Text(
                     "QUICK BATTERY INFO",
-                    color = muted,
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp)
+                    color = tp,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     "Live readings from battery service",
-                    color = onSurfV,
+                    color = muted,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // 2x2 Grid of quick metric tiles
-            Column(
+            // 3 Clean metric columns (Level, Temperature, Voltage)
+            Row(
                 Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    QuickInfoTile(
-                        modifier = Modifier.weight(1f),
-                        label    = "LEVEL",
-                        value    = levelText,
-                        subText  = "Current charge",
-                        border   = border,
-                        tp       = tp,
-                        ts       = ts,
-                        muted    = muted
-                    )
-                    QuickInfoTile(
-                        modifier = Modifier.weight(1f),
-                        label    = "TEMPERATURE",
-                        value    = tempText,
-                        subText  = "Internal sensor",
-                        border   = border,
-                        tp       = tp,
-                        ts       = ts,
-                        muted    = muted
-                    )
-                }
-
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    QuickInfoTile(
-                        modifier = Modifier.weight(1f),
-                        label    = "VOLTAGE",
-                        value    = voltText,
-                        subText  = "Battery potential",
-                        border   = border,
-                        tp       = tp,
-                        ts       = ts,
-                        muted    = muted
-                    )
-                    QuickInfoTile(
-                        modifier = Modifier.weight(1f),
-                        label    = "STATUS",
-                        value    = statusText,
-                        subText  = statusSubText,
-                        border   = border,
-                        tp       = tp,
-                        ts       = ts,
-                        muted    = muted
-                    )
-                }
+                QuickInfoTile(
+                    modifier = Modifier.weight(1f),
+                    label    = "LEVEL",
+                    value    = levelText,
+                    subText  = "Charge",
+                    border   = border,
+                    tp       = tp,
+                    ts       = ts,
+                    muted    = muted
+                )
+                QuickInfoTile(
+                    modifier = Modifier.weight(1f),
+                    label    = "TEMP",
+                    value    = tempText,
+                    subText  = "Sensor",
+                    border   = border,
+                    tp       = tp,
+                    ts       = ts,
+                    muted    = muted
+                )
+                QuickInfoTile(
+                    modifier = Modifier.weight(1f),
+                    label    = "VOLTAGE",
+                    value    = voltText,
+                    subText  = "Potential",
+                    border   = border,
+                    tp       = tp,
+                    ts       = ts,
+                    muted    = muted
+                )
             }
         }
     }
@@ -564,32 +534,34 @@ private fun QuickInfoTile(
         color    = Color(0xFF0F0F12),
         border   = BorderStroke(1.dp, border)
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 12.dp)) {
             Text(
                 label,
                 color = muted,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.5.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    letterSpacing = 0.8.sp
                 )
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 value,
                 color = tp,
-                style = MaterialTheme.typography.titleLarge.copy(
+                style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 17.sp,
                     letterSpacing = (-0.5).sp
-                )
+                ),
+                softWrap = false
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 subText,
                 color = ts,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                maxLines = 1
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
@@ -600,6 +572,7 @@ private fun QuickInfoTile(
  */
 @Composable
 fun ViewBatteryDetailsButton(
+    isConciseOnly: Boolean = false,
     onClick: () -> Unit
 ) {
     Button(
@@ -620,13 +593,23 @@ fun ViewBatteryDetailsButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "View battery details",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "View battery details",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
                 )
-            )
+                if (isConciseOnly) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "(Concise)",
+                        color = textMuted(),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
             Icon(
                 painter = painterResource(R.drawable.arrow_forward_ios),
                 contentDescription = null,

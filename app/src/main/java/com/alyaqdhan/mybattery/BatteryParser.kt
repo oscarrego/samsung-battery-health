@@ -111,11 +111,17 @@ object BatteryParser {
 
     // -- Log parsing -----------------------------------------------------------
 
-    fun parseLogEntry(folderUri: Uri, entry: DocEntry, context: Context): BatteryInfo {
+    fun parseLogEntry(
+        folderUri: Uri,
+        entry: DocEntry,
+        context: Context,
+        isCancelled: () -> Boolean = { false },
+        conciseOnly: Boolean = false
+    ): BatteryInfo {
         val fileUri = DocumentsContract.buildDocumentUriUsingTree(folderUri, entry.id)
         return try {
             context.contentResolver.openInputStream(fileUri)?.use { stream ->
-                parseInputStream(stream, entry.name)
+                parseInputStream(stream, entry.name, isCancelled, conciseOnly)
             } ?: BatteryInfo(
                 healthPercent = null, cycleCount = null,
                 logFileName   = entry.name,
@@ -133,7 +139,9 @@ object BatteryParser {
     fun parseLatestLog(
         folderUri: Uri,
         context: Context,
-        prefs: SharedPreferences
+        prefs: SharedPreferences,
+        isCancelled: () -> Boolean = { false },
+        conciseOnly: Boolean = false
     ): BatteryInfo {
         val logEntry = findLatestLogEntry(folderUri, context)
             ?: return BatteryInfo(healthPercent = null, cycleCount = null, errorMessage = "NO_LOG_FOUND")
@@ -141,7 +149,7 @@ object BatteryParser {
         val fileUri = DocumentsContract.buildDocumentUriUsingTree(folderUri, logEntry.id)
         val info = try {
             context.contentResolver.openInputStream(fileUri)?.use { stream ->
-                parseInputStream(stream, logEntry.name)
+                parseInputStream(stream, logEntry.name, isCancelled, conciseOnly)
             } ?: BatteryInfo(
                 healthPercent = null, cycleCount = null,
                 logFileName   = logEntry.name,
@@ -162,7 +170,9 @@ object BatteryParser {
     fun smartScan(
         folderUri: Uri,
         context: Context,
-        prefs: SharedPreferences
+        prefs: SharedPreferences,
+        isCancelled: () -> Boolean = { false },
+        conciseOnly: Boolean = false
     ): BatteryInfo {
         val latestEntry = findLatestLogEntry(folderUri, context)
         if (latestEntry == null) {
@@ -171,8 +181,10 @@ object BatteryParser {
             return BatteryInfo(healthPercent = null, cycleCount = null, errorMessage = "NO_LOG_FOUND")
         }
         val cached = BatteryCache.loadCachedBatteryInfo(prefs)
-        if (cached != null && cached.logFileName == latestEntry.name) return cached
-        return parseLatestLog(folderUri, context, prefs)
+        if (cached != null && cached.logFileName == latestEntry.name && (!cached.isConciseOnly || conciseOnly)) {
+            return cached
+        }
+        return parseLatestLog(folderUri, context, prefs, isCancelled, conciseOnly)
     }
 
     fun extractBatterySection(folderUri: Uri, entry: DocEntry, context: Context): String {
@@ -268,7 +280,24 @@ object BatteryParser {
         } catch (_: Exception) { 0L }
     }
 
-    fun parseInputStream(stream: InputStream, fileName: String): BatteryInfo {
+    // Precompiled regex patterns to avoid repeated compilation in loops
+    private val fullDateTimeRegex    = Regex("""(?:==\s*dumpstate:|dumpstate:|Build time:)\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})""")
+    private val bracketDateTimeRegex = Regex("""^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})]""")
+    private val dateTimeFmt          = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+    private val compactDateFmt       = SimpleDateFormat("yyyyMMdd", Locale.US)
+    private val llbRegex             = Regex("""^LLB\s+(CAL|MAN):\s*(\d{8})""", RegexOption.IGNORE_CASE)
+    private val tempRegex            = Regex("""^temperature\s*:""", RegexOption.IGNORE_CASE)
+    private val voltRegex            = Regex("""^voltage\s*:""", RegexOption.IGNORE_CASE)
+    private val statusRegex          = Regex("""^status\s*:""", RegexOption.IGNORE_CASE)
+    private val healthRegex          = Regex("""^health\s*:""", RegexOption.IGNORE_CASE)
+    private val currentRegex         = Regex("""(?:current now|mCurrentNow|sec_bat_current)\s*:\s*(-?\d+)""", RegexOption.IGNORE_CASE)
+
+    fun parseInputStream(
+        stream: InputStream,
+        fileName: String,
+        isCancelled: () -> Boolean = { false },
+        conciseOnly: Boolean = false
+    ): BatteryInfo {
         var asoc: Int?     = null
         var asocSeen       = false
         var asocRaw        = ""
@@ -312,254 +341,280 @@ object BatteryParser {
         val rawEntries   = mutableListOf<RawDumpEntry>()
         val rawDumpLines = StringBuilder()
 
-        val fullDateTimeRegex    = Regex("""(?:==\s*dumpstate:|dumpstate:|Build time:)\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})""")
-        val bracketDateTimeRegex = Regex("""^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})]""")
-        val dateTimeFmt          = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        val llbRegex             = Regex("""^LLB\s+(CAL|MAN):\s*(\d{8})\s*$""", RegexOption.IGNORE_CASE)
-        val compactDateFmt       = SimpleDateFormat("yyyyMMdd", Locale.US)
-
         var insideBatteryService = false
+        var batteryServiceSeen   = false
         var insideBatteryBackup  = false
+        var lineIndex            = 0
+        var isConciseResult      = conciseOnly
 
-        BufferedReader(InputStreamReader(stream)).use { reader ->
-            reader.forEachLine { line ->
-                val t = line.trim()
+        BufferedReader(InputStreamReader(stream, Charsets.UTF_8), 65536).use { reader ->
+            while (true) {
+                val line = reader.readLine() ?: break
+                lineIndex++
+
+                // Cooperative cancellation check every 128 lines for instant UI responsiveness
+                if (lineIndex % 128 == 0 && isCancelled()) {
+                    isConciseResult = true
+                    break
+                }
+
+                if (line.isEmpty()) continue
 
                 // State tracker for sections
-                when {
-                    line.contains("DUMP OF SERVICE battery:") -> {
-                        insideBatteryService = true
-                        insideBatteryBackup  = false
-                    }
-                    line.contains("BatteryInfoBackUp") -> {
-                        insideBatteryBackup  = true
+                if (line.contains("DUMP OF SERVICE battery:")) {
+                    insideBatteryService = true
+                    batteryServiceSeen   = true
+                    insideBatteryBackup  = false
+                    continue
+                }
+
+                if (insideBatteryService) {
+                    if (line.startsWith("DUMP OF SERVICE ") || line.startsWith("--------------------------------------------------")) {
                         insideBatteryService = false
-                    }
-                    insideBatteryService && line.contains("DUMP OF SERVICE ") -> {
-                        insideBatteryService = false
-                    }
-                    insideBatteryBackup && line.isNotBlank() && !line.startsWith(" ") && !line.startsWith("\t")
-                            && !line.trimStart().startsWith("m") && !line.trimStart().startsWith("L") -> {
-                        insideBatteryBackup = false
+
+                        // Once battery service dump concludes and we have core metrics,
+                        // exit immediately without scanning remaining massive logcat/dmesg chunks.
+                        if (asoc != null || bsoh != null || asocSeen || usage != null) {
+                            break
+                        }
                     }
                 }
 
-                // Collect raw dump entries when inside either battery block
+                if (line.contains("BatteryInfoBackUp")) {
+                    insideBatteryBackup  = true
+                    insideBatteryService = false
+                    continue
+                }
+
+                if (insideBatteryBackup && !line.startsWith(" ") && !line.startsWith("\t")
+                    && !line.trimStart().startsWith("m") && !line.trimStart().startsWith("L") && line.isNotBlank()) {
+                    insideBatteryBackup = false
+                    if (isConciseResult && (asoc != null || bsoh != null) && usage != null) {
+                        break
+                    }
+                }
+
+                // Collect raw dump entries and parse values inside either battery block
                 if (insideBatteryService || insideBatteryBackup) {
+                    val t = line.trim()
                     if (t.contains(":") && !t.startsWith("[") && !t.startsWith("=") && !t.startsWith("-") && t.length < 120) {
                         val key = t.substringBefore(":").trim()
                         val value = t.substringAfter(":").trim()
-                        if (key.isNotEmpty() && value.isNotEmpty()) {
+                        if (key.isNotEmpty() && value.isNotEmpty() && !isConciseResult) {
                             rawEntries.add(RawDumpEntry(key, value))
                             rawDumpLines.appendLine("$key: $value")
                         }
                     }
-                }
 
-                // 1. Health percentages and cycles
-                if (t.contains("mSavedBatteryAsoc:")) {
-                    asocSeen = true
-                    asocRaw  = t.substringAfter("mSavedBatteryAsoc:").trim()
-                    asoc     = extractValueOrNull(t, "mSavedBatteryAsoc:")
-                }
-                if (t.contains("mSavedBatteryBsoh:")) {
-                    bsohRaw = t.substringAfter("mSavedBatteryBsoh:").trim()
-                    bsoh    = extractValueOrNull(t, "mSavedBatteryBsoh:")
-                }
-                if (t.contains("mSavedBatteryUsage:")) {
-                    usageRaw = t.substringAfter("mSavedBatteryUsage:").trim()
-                    val raw  = extractValueOrNull(t, "mSavedBatteryUsage:")
-                    usage    = if (raw != null) raw / 100 else null
-                }
-
-                // 2. Manufacture / Calibration date
-                if (batteryDateMs == 0L) {
-                    llbRegex.find(t)?.let { m ->
-                        llbType        = m.groupValues[1].uppercase()
-                        batteryDateMs = try {
-                            compactDateFmt.parse(m.groupValues[2])?.time ?: 0L
-                        } catch (_: Exception) { 0L }
+                    // 1. Health percentages and cycles
+                    if (line.contains("mSavedBatteryAsoc:")) {
+                        asocSeen = true
+                        asocRaw  = line.substringAfter("mSavedBatteryAsoc:").trim()
+                        asoc     = extractValueOrNull(line, "mSavedBatteryAsoc:")
                     }
-                }
-
-                // 3. Log timestamps
-                if (logTimestampMs == 0L) {
-                    fullDateTimeRegex.find(t)?.let { m ->
-                        logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
-                    } ?: bracketDateTimeRegex.find(t)?.let { m ->
-                        logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
+                    if (line.contains("mSavedBatteryBsoh:")) {
+                        bsohRaw = line.substringAfter("mSavedBatteryBsoh:").trim()
+                        bsoh    = extractValueOrNull(line, "mSavedBatteryBsoh:")
                     }
-                }
-
-                // 4. Quick Battery Info fields
-                if (level == null && (insideBatteryService || t.startsWith("level:", ignoreCase = true))) {
-                    val rawL = extractValueOrNull(t, "level:")
-                    if (rawL != null && rawL in 0..100) level = rawL
-                }
-
-                if (scale == null && (insideBatteryService || t.startsWith("scale:", ignoreCase = true))) {
-                    extractValueOrNull(t, "scale:")?.let { scale = it }
-                }
-
-                // Temperature: standard Android dumpsys is tenths of degree C (e.g. 295 -> 29.5 C)
-                if (temperatureC == null && (insideBatteryService || t.startsWith("temperature:", ignoreCase = true))) {
-                    if (Regex("""^temperature\s*:""", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
-                        val rawTemp = extractValueOrNull(t, "temperature:")
-                        if (rawTemp != null && rawTemp > -400) {
-                            temperatureC = if (rawTemp > 100) rawTemp / 10f else rawTemp.toFloat()
-                        }
+                    if (line.contains("mSavedBatteryUsage:")) {
+                        usageRaw = line.substringAfter("mSavedBatteryUsage:").trim()
+                        val raw  = extractValueOrNull(line, "mSavedBatteryUsage:")
+                        usage    = if (raw != null) raw / 100 else null
                     }
-                }
 
-                // Voltage: standard Android dumpsys is mV (e.g. 4125 -> 4.125 V) or uV
-                if (voltageV == null && (insideBatteryService || t.startsWith("voltage:", ignoreCase = true))) {
-                    if (Regex("""^voltage\s*:""", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
-                        val rawV = extractValueOrNull(t, "voltage:")
-                        if (rawV != null && rawV > 0) {
-                            voltageV = when {
-                                rawV in 1000..9999   -> rawV / 1000f
-                                rawV >= 10000        -> rawV / 1000000f
-                                else                 -> rawV.toFloat()
+                    // 4. Quick Battery Info fields
+                    if (level == null && (insideBatteryService || line.contains("level:"))) {
+                        val rawL = extractValueOrNull(line, "level:")
+                        if (rawL != null && rawL in 0..100) level = rawL
+                    }
+
+                    if (scale == null && (insideBatteryService || line.contains("scale:"))) {
+                        extractValueOrNull(line, "scale:")?.let { scale = it }
+                    }
+
+                    if (temperatureC == null && (insideBatteryService || line.contains("temperature:"))) {
+                        if (tempRegex.containsMatchIn(t)) {
+                            val rawTemp = extractValueOrNull(line, "temperature:")
+                            if (rawTemp != null && rawTemp > -400) {
+                                temperatureC = if (rawTemp > 100) rawTemp / 10f else rawTemp.toFloat()
                             }
                         }
                     }
-                }
 
-                // Status
-                if (statusStr.isBlank() && (insideBatteryService || t.startsWith("status:", ignoreCase = true))) {
-                    if (Regex("""^status\s*:""", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
-                        val rawStatus = t.substringAfter(":").trim()
-                        statusStr = when (rawStatus) {
-                            "1" -> "Unknown"
-                            "2" -> "Charging"
-                            "3" -> "Discharging"
-                            "4" -> "Not charging"
-                            "5" -> "Full"
-                            else -> if (rawStatus.isNotBlank() && !rawStatus.all { it.isDigit() }) {
-                                rawStatus.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-                            } else ""
+                    if (voltageV == null && (insideBatteryService || line.contains("voltage:"))) {
+                        if (voltRegex.containsMatchIn(t)) {
+                            val rawV = extractValueOrNull(line, "voltage:")
+                            if (rawV != null && rawV > 0) {
+                                voltageV = when {
+                                    rawV in 1000..9999   -> rawV / 1000f
+                                    rawV >= 10000        -> rawV / 1000000f
+                                    else                 -> rawV.toFloat()
+                                }
+                            }
                         }
                     }
-                }
 
-                // Health condition
-                if (healthCondStr.isBlank() && (insideBatteryService || t.startsWith("health:", ignoreCase = true))) {
-                    if (Regex("""^health\s*:""", RegexOption.IGNORE_CASE).containsMatchIn(t)) {
-                        val rawH = t.substringAfter(":").trim()
-                        healthCondStr = when (rawH) {
-                            "1" -> "Unknown"
-                            "2" -> "Good"
-                            "3" -> "Overheat"
-                            "4" -> "Dead"
-                            "5" -> "Over voltage"
-                            "6" -> "Unspecified failure"
-                            "7" -> "Cold"
-                            else -> if (rawH.isNotBlank() && !rawH.all { it.isDigit() }) {
-                                rawH.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-                            } else ""
+                    if (statusStr.isBlank() && (insideBatteryService || line.contains("status:"))) {
+                        if (statusRegex.containsMatchIn(t)) {
+                            val rawStatus = t.substringAfter(":").trim()
+                            statusStr = when (rawStatus) {
+                                "1" -> "Unknown"
+                                "2" -> "Charging"
+                                "3" -> "Discharging"
+                                "4" -> "Not charging"
+                                "5" -> "Full"
+                                else -> if (rawStatus.isNotBlank() && !rawStatus.all { it.isDigit() }) {
+                                    rawStatus.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+                                } else ""
+                            }
                         }
                     }
-                }
 
-                // Power sources
-                if (acPowered == null && t.startsWith("AC powered:", ignoreCase = true)) {
-                    acPowered = t.substringAfter(":").trim().startsWith("true", ignoreCase = true)
-                }
-                if (usbPowered == null && t.startsWith("USB powered:", ignoreCase = true)) {
-                    usbPowered = t.substringAfter(":").trim().startsWith("true", ignoreCase = true)
-                }
-                if (wirelessPowered == null && t.startsWith("Wireless powered:", ignoreCase = true)) {
-                    wirelessPowered = t.substringAfter(":").trim().startsWith("true", ignoreCase = true)
-                }
-
-                // Max charging current & voltage
-                if (maxChargingCurrentMa == null && t.contains("Max charging current:", ignoreCase = true)) {
-                    val rawCur = extractValueOrNull(t, "Max charging current:")
-                    if (rawCur != null && rawCur > 0) {
-                        maxChargingCurrentMa = if (rawCur > 10000) rawCur / 1000 else rawCur
-                    }
-                }
-                if (maxChargingVoltageMv == null && t.contains("Max charging voltage:", ignoreCase = true)) {
-                    val rawVolt = extractValueOrNull(t, "Max charging voltage:")
-                    if (rawVolt != null && rawVolt > 0) {
-                        maxChargingVoltageMv = if (rawVolt > 20000) rawVolt / 1000 else rawVolt
-                    }
-                }
-
-                // Fast charging settings
-                if (fastCharging.isBlank()) {
-                    when {
-                        t.contains("mSuperFastCharging: true", ignoreCase = true) -> fastCharging = "Super Fast Charging"
-                        t.contains("mFastCharging: true", ignoreCase = true)      -> fastCharging = "Fast Charging"
-                        t.contains("Fast charging: true", ignoreCase = true)       -> fastCharging = "Fast Charging"
-                    }
-                }
-
-                // Historical peaks
-                if (maxRecordedTempC == null && t.contains("mSavedBatteryMaxTemp:")) {
-                    val rawMaxT = extractValueOrNull(t, "mSavedBatteryMaxTemp:")
-                    if (rawMaxT != null && rawMaxT > 0) {
-                        maxRecordedTempC = if (rawMaxT > 100) rawMaxT / 10f else rawMaxT.toFloat()
-                    }
-                }
-                if (maxRecordedCurrentMa == null && t.contains("mSavedBatteryMaxCurrent:")) {
-                    val rawMaxI = extractValueOrNull(t, "mSavedBatteryMaxCurrent:")
-                    if (rawMaxI != null && rawMaxI > 0) {
-                        maxRecordedCurrentMa = rawMaxI
-                    }
-                }
-
-                // Instantaneous current
-                if (currentNowMa == null) {
-                    val curMatch = Regex("""(?:current now|mCurrentNow|sec_bat_current)\s*:\s*(-?\d+)""", RegexOption.IGNORE_CASE).find(t)
-                    curMatch?.let { m ->
-                        val rawI = m.groupValues[1].toIntOrNull()
-                        if (rawI != null) {
-                            currentNowMa = if (abs(rawI) > 10000) rawI / 1000 else rawI
+                    if (healthCondStr.isBlank() && (insideBatteryService || line.contains("health:"))) {
+                        if (healthRegex.containsMatchIn(t)) {
+                            val rawH = t.substringAfter(":").trim()
+                            healthCondStr = when (rawH) {
+                                "1" -> "Unknown"
+                                "2" -> "Good"
+                                "3" -> "Overheat"
+                                "4" -> "Dead"
+                                "5" -> "Over voltage"
+                                "6" -> "Unspecified failure"
+                                "7" -> "Cold"
+                                else -> if (rawH.isNotBlank() && !rawH.all { it.isDigit() }) {
+                                    rawH.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+                                } else ""
+                            }
                         }
                     }
-                }
 
-                // Capacity & Battery details
-                if (chargeCounterUah == null && t.contains("Charge counter:", ignoreCase = true)) {
-                    val rawCc = extractLongValueOrNull(t, "Charge counter:")
-                    if (rawCc != null && rawCc > 0L) chargeCounterUah = rawCc
-                }
-
-                if (technology.isBlank() && t.startsWith("technology:", ignoreCase = true)) {
-                    technology = t.substringAfter(":").trim()
-                }
-
-                if (present == null && t.startsWith("present:", ignoreCase = true)) {
-                    present = t.substringAfter(":").trim().startsWith("true", ignoreCase = true)
-                }
-
-                // Protection settings
-                if (protectionThreshold == null && t.contains("mProtectionThreshold:", ignoreCase = true)) {
-                    extractValueOrNull(t, "mProtectionThreshold:")?.let { protectionThreshold = it }
-                }
-                if (protectionMode.isBlank()) {
-                    if (t.contains("mBatteryProtection:", ignoreCase = true)) {
-                        val rawMode = t.substringAfter("mBatteryProtection:").trim()
-                        protectionMode = when (rawMode) {
-                            "1" -> "Enabled"
-                            "0" -> "Disabled"
-                            else -> rawMode
-                        }
-                    } else if (t.contains("Protect Battery:", ignoreCase = true)) {
-                        protectionMode = t.substringAfter(":").trim()
+                    if (acPowered == null && line.contains("AC powered:", ignoreCase = true)) {
+                        acPowered = line.substringAfter(":").trim().startsWith("true", ignoreCase = true)
                     }
-                }
+                    if (usbPowered == null && line.contains("USB powered:", ignoreCase = true)) {
+                        usbPowered = line.substringAfter(":").trim().startsWith("true", ignoreCase = true)
+                    }
+                    if (wirelessPowered == null && line.contains("Wireless powered:", ignoreCase = true)) {
+                        wirelessPowered = line.substringAfter(":").trim().startsWith("true", ignoreCase = true)
+                    }
 
-                // Authentication result
-                if (authResult.isBlank()) {
-                    when {
-                        t.contains("mPassedAuth: 1", ignoreCase = true) || t.contains("mPassAuth: 1", ignoreCase = true) ->
-                            authResult = "Passed"
-                        t.contains("mPassedAuth: 0", ignoreCase = true) || t.contains("mPassAuth: 0", ignoreCase = true) ->
-                            authResult = "Unverified (0)"
-                        t.contains("battery auth: pass", ignoreCase = true) ->
-                            authResult = "Passed"
+                    if (maxChargingCurrentMa == null && line.contains("Max charging current:", ignoreCase = true)) {
+                        val rawCur = extractValueOrNull(line, "Max charging current:")
+                        if (rawCur != null && rawCur > 0) {
+                            maxChargingCurrentMa = if (rawCur > 10000) rawCur / 1000 else rawCur
+                        }
+                    }
+                    if (maxChargingVoltageMv == null && line.contains("Max charging voltage:", ignoreCase = true)) {
+                        val rawVolt = extractValueOrNull(line, "Max charging voltage:")
+                        if (rawVolt != null && rawVolt > 0) {
+                            maxChargingVoltageMv = if (rawVolt > 20000) rawVolt / 1000 else rawVolt
+                        }
+                    }
+
+                    if (fastCharging.isBlank()) {
+                        when {
+                            line.contains("mSuperFastCharging: true", ignoreCase = true) -> fastCharging = "Super Fast Charging"
+                            line.contains("mFastCharging: true", ignoreCase = true)      -> fastCharging = "Fast Charging"
+                            line.contains("Fast charging: true", ignoreCase = true)       -> fastCharging = "Fast Charging"
+                        }
+                    }
+
+                    if (maxRecordedTempC == null && line.contains("mSavedBatteryMaxTemp:")) {
+                        val rawMaxT = extractValueOrNull(line, "mSavedBatteryMaxTemp:")
+                        if (rawMaxT != null && rawMaxT > 0) {
+                            maxRecordedTempC = if (rawMaxT > 100) rawMaxT / 10f else rawMaxT.toFloat()
+                        }
+                    }
+                    if (maxRecordedCurrentMa == null && line.contains("mSavedBatteryMaxCurrent:")) {
+                        val rawMaxI = extractValueOrNull(line, "mSavedBatteryMaxCurrent:")
+                        if (rawMaxI != null && rawMaxI > 0) {
+                            maxRecordedCurrentMa = rawMaxI
+                        }
+                    }
+
+                    if (currentNowMa == null && (line.contains("current now", ignoreCase = true) || line.contains("sec_bat_current", ignoreCase = true) || line.contains("mCurrentNow", ignoreCase = true))) {
+                        currentRegex.find(line)?.let { m ->
+                            val rawI = m.groupValues[1].toIntOrNull()
+                            if (rawI != null) {
+                                currentNowMa = if (abs(rawI) > 10000) rawI / 1000 else rawI
+                            }
+                        }
+                    }
+
+                    if (chargeCounterUah == null && line.contains("Charge counter:", ignoreCase = true)) {
+                        val rawCc = extractLongValueOrNull(line, "Charge counter:")
+                        if (rawCc != null && rawCc > 0L) chargeCounterUah = rawCc
+                    }
+
+                    if (technology.isBlank() && line.contains("technology:", ignoreCase = true)) {
+                        technology = line.substringAfter(":").trim()
+                    }
+
+                    if (present == null && line.contains("present:", ignoreCase = true)) {
+                        present = line.substringAfter(":").trim().startsWith("true", ignoreCase = true)
+                    }
+
+                    if (protectionThreshold == null && line.contains("mProtectionThreshold:", ignoreCase = true)) {
+                        extractValueOrNull(line, "mProtectionThreshold:")?.let { protectionThreshold = it }
+                    }
+                    if (protectionMode.isBlank()) {
+                        if (line.contains("mBatteryProtection:", ignoreCase = true)) {
+                            val rawMode = line.substringAfter("mBatteryProtection:").trim()
+                            protectionMode = when (rawMode) {
+                                "1" -> "Enabled"
+                                "0" -> "Disabled"
+                                else -> rawMode
+                            }
+                        } else if (line.contains("Protect Battery:", ignoreCase = true)) {
+                            protectionMode = line.substringAfter(":").trim()
+                        }
+                    }
+
+                    if (authResult.isBlank()) {
+                        when {
+                            line.contains("mPassedAuth: 1", ignoreCase = true) || line.contains("mPassAuth: 1", ignoreCase = true) ->
+                                authResult = "Passed"
+                            line.contains("mPassedAuth: 0", ignoreCase = true) || line.contains("mPassAuth: 0", ignoreCase = true) ->
+                                authResult = "Unverified (0)"
+                            line.contains("battery auth: pass", ignoreCase = true) ->
+                                authResult = "Passed"
+                        }
+                    }
+                } else {
+                    // Lines outside battery service: only inspect for dates/timestamps and fallback registers
+                    if (batteryDateMs == 0L && (line.startsWith("LLB") || line.contains("LLB "))) {
+                        llbRegex.find(line.trim())?.let { m ->
+                            llbType        = m.groupValues[1].uppercase()
+                            batteryDateMs = try {
+                                compactDateFmt.parse(m.groupValues[2])?.time ?: 0L
+                            } catch (_: Exception) { 0L }
+                        }
+                    }
+
+                    if (logTimestampMs == 0L && (line.startsWith("==") || line.startsWith("dumpstate:") || line.startsWith("["))) {
+                        val t = line.trim()
+                        fullDateTimeRegex.find(t)?.let { m ->
+                            logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
+                        } ?: bracketDateTimeRegex.find(t)?.let { m ->
+                            logTimestampMs = dateTimeFmt.parse(m.groupValues[1])?.time ?: 0L
+                        }
+                    }
+
+                    if (line.contains("mSavedBattery")) {
+                        if (line.contains("mSavedBatteryAsoc:")) {
+                            asocSeen = true
+                            asocRaw  = line.substringAfter("mSavedBatteryAsoc:").trim()
+                            asoc     = extractValueOrNull(line, "mSavedBatteryAsoc:")
+                        }
+                        if (line.contains("mSavedBatteryBsoh:")) {
+                            bsohRaw = line.substringAfter("mSavedBatteryBsoh:").trim()
+                            bsoh    = extractValueOrNull(line, "mSavedBatteryBsoh:")
+                        }
+                        if (line.contains("mSavedBatteryUsage:")) {
+                            usageRaw = line.substringAfter("mSavedBatteryUsage:").trim()
+                            val raw  = extractValueOrNull(line, "mSavedBatteryUsage:")
+                            usage    = if (raw != null) raw / 100 else null
+                        }
                     }
                 }
             }
@@ -589,6 +644,7 @@ object BatteryParser {
             logFileName           = fileName,
             logTimestampMs        = logTimestampMs,
             readSuccess           = readSuccess,
+            isConciseOnly         = isConciseResult,
             level                 = level,
             scale                 = scale,
             temperatureC          = temperatureC,

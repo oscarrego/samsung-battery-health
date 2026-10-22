@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -193,6 +194,7 @@ private fun BatteryDetailsScreen(
                 isExpanded = isAdvancedExpanded,
                 onToggleExpand = { isAdvancedExpanded = !isAdvancedExpanded },
                 onCopy = copyToClipboard,
+                onLoadFullDump = { viewModel.loadFullDetails() },
                 border = border,
                 tp = tp,
                 ts = ts,
@@ -217,32 +219,49 @@ private fun CapacitySection(
     green: Color
 ) {
     DetailCard(title = "A. BATTERY CAPACITY", border = border, muted = muted) {
-        val asocDisplay = info.asocPercent?.let { "$it%" } ?: info.asocRaw.ifBlank { "--" }
+        val asocLabel = info.asocPercent?.let { getBatteryHealthLabel(it) } ?: ""
+        val asocDisplay = info.asocPercent?.let { if (asocLabel.isNotBlank()) "$it% ($asocLabel)" else "$it%" } ?: info.asocRaw.ifBlank { "--" }
+        val asocColor = when {
+            info.asocPercent == null -> tp
+            info.asocPercent!! >= 80 -> green
+            info.asocPercent!! >= 70 -> Color(0xFFFFB300)
+            info.asocPercent!! >= 60 -> Color(0xFFFF9100)
+            else                     -> Color(0xFFFF5252)
+        }
         DetailRow(
             label = "ASOC Health Estimate",
             value = asocDisplay,
             sublabel = "Primary capacity health calculation",
-            valueColor = if (info.asocPercent != null && info.asocPercent!! >= 80) green else tp
+            valueColor = asocColor
         )
 
-        val bsohDisplay = info.bsohPercent?.let { "$it%" } ?: info.bsohRaw.ifBlank { "Not reported" }
+        val bsohLabel = info.bsohPercent?.let { getBatteryHealthLabel(it) } ?: ""
+        val bsohDisplay = info.bsohPercent?.let { if (bsohLabel.isNotBlank()) "$it% ($bsohLabel)" else "$it%" } ?: info.bsohRaw.ifBlank { "Not reported" }
+        val bsohColor = when {
+            info.bsohPercent == null -> tp
+            info.bsohPercent!! >= 80 -> green
+            info.bsohPercent!! >= 70 -> Color(0xFFFFB300)
+            info.bsohPercent!! >= 60 -> Color(0xFFFF9100)
+            else                     -> Color(0xFFFF5252)
+        }
         DetailRow(
             label = "BSOH Health Estimate",
             value = bsohDisplay,
             sublabel = "Secondary hardware health metric",
-            valueColor = tp
+            valueColor = bsohColor
         )
 
-        val chargeCounterText = if (info.chargeCounterUah != null) {
-            val mah = info.chargeCounterUah / 1000
-            "$mah mAh (${info.chargeCounterUah} µAh)"
+        val mah = if (info.chargeCounterUah != null) info.chargeCounterUah / 1000 else null
+        val chargeCounterText = if (mah != null) "$mah mAh" else "Not reported"
+        val chargeCounterSub = if (info.chargeCounterUah != null) {
+            "Coulomb counter: ${info.chargeCounterUah} µAh (instantaneous, not nominal capacity)"
         } else {
-            "Not reported"
+            "Instantaneous coulomb charge, not total design capacity"
         }
         DetailRow(
             label = "Charge Counter",
             value = chargeCounterText,
-            sublabel = "Instantaneous coulomb charge, not total design capacity",
+            sublabel = chargeCounterSub,
             valueColor = tp
         )
 
@@ -254,15 +273,16 @@ private fun CapacitySection(
             valueColor = tp
         )
 
-        val firstUseDate = if (info.batteryDateFormatted.isNotEmpty()) {
-            info.batteryDateFormatted + if (info.llbType.isNotEmpty()) " (${info.llbType})" else ""
+        val firstUseDate = info.batteryDateFormatted.ifBlank { "Not reported" }
+        val firstUseSub = if (info.llbType.isNotEmpty()) {
+            "Calibration register: LLB ${info.llbType}"
         } else {
-            "Not reported"
+            "Extracted from hardware calibration registers"
         }
         DetailRow(
             label = "First-Use / Assembly Date",
             value = firstUseDate,
-            sublabel = "Extracted from LLB hardware calibration registers",
+            sublabel = firstUseSub,
             valueColor = tp,
             isLast = true
         )
@@ -297,7 +317,7 @@ private fun ChargingSection(
 
         DetailRow(
             label = "Fast Charging",
-            value = info.fastCharging.ifBlank { "Standard / Inactive" },
+            value = info.fastCharging.ifBlank { "Standard / Off" },
             sublabel = "Adaptive Fast Charging / SFC profile",
             valueColor = tp
         )
@@ -318,7 +338,7 @@ private fun ChargingSection(
             valueColor = tp
         )
 
-        val protection = info.protectionThreshold?.let { "Limit: $it%" } ?: "Default (100%)"
+        val protection = info.protectionThreshold?.let { "$it%" } ?: "None (100%)"
         DetailRow(
             label = "Battery Protection Threshold",
             value = protection,
@@ -361,7 +381,6 @@ private fun ElectricalReadingsSection(
             label = "Current Temperature",
             value = tempText,
             sublabel = "Internal thermistor sensor",
-            tag = "LIVE",
             valueColor = tp
         )
 
@@ -370,7 +389,6 @@ private fun ElectricalReadingsSection(
             label = "Current Voltage",
             value = voltText,
             sublabel = "Cell terminal voltage",
-            tag = "LIVE",
             valueColor = tp
         )
 
@@ -379,7 +397,6 @@ private fun ElectricalReadingsSection(
             label = "Instantaneous Current",
             value = currText,
             sublabel = "Negative when discharging, positive when charging",
-            tag = "LIVE",
             valueColor = tp
         )
 
@@ -388,7 +405,6 @@ private fun ElectricalReadingsSection(
             label = "Highest Recorded Temperature",
             value = maxTempText,
             sublabel = "mSavedBatteryMaxTemp hardware register",
-            tag = "HISTORICAL",
             valueColor = tp
         )
 
@@ -397,7 +413,6 @@ private fun ElectricalReadingsSection(
             label = "Highest Recorded Current",
             value = maxCurrText,
             sublabel = "mSavedBatteryMaxCurrent hardware register",
-            tag = "HISTORICAL",
             valueColor = tp,
             isLast = true
         )
@@ -492,10 +507,11 @@ private fun BatteryMetaSection(
             valueColor = tp
         )
 
+        val displayName = BatteryParser.truncateLogDisplayName(info.logFileName).ifBlank { "Unavailable" }
         DetailRow(
             label = "Dumpstate File Name",
-            value = info.logFileName.ifBlank { "Unavailable" },
-            sublabel = "Source log file in /Device/log/",
+            value = displayName,
+            sublabel = info.logFileName,
             valueColor = tp
         )
 
@@ -520,6 +536,7 @@ private fun AdvancedSection(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onCopy: (String, String) -> Unit,
+    onLoadFullDump: () -> Unit = {},
     border: Color,
     tp: Color,
     ts: Color,
@@ -549,13 +566,17 @@ private fun AdvancedSection(
                 Column(Modifier.weight(1f)) {
                     Text(
                         "F. ADVANCED INFORMATION",
-                        color = muted,
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp)
+                        color = tp,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp
+                        )
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        "${rawEntries.size} raw fields parsed from dumpstate",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        if (info.isConciseOnly) "Concise mode (raw fields skipped for fast load)"
+                        else "${rawEntries.size} raw fields parsed from dumpstate",
+                        color = muted,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -611,12 +632,32 @@ private fun AdvancedSection(
                             Modifier.fillMaxWidth().padding(vertical = 24.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                if (rawEntries.isEmpty()) "No raw battery fields available."
-                                else "No fields match \"$searchQuery\"",
-                                color = muted,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    if (info.isConciseOnly) "Concise mode active: detailed raw dump was skipped for faster loading."
+                                    else if (rawEntries.isEmpty()) "No raw battery fields available."
+                                    else "No fields match \"$searchQuery\"",
+                                    color = muted,
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                if (info.isConciseOnly) {
+                                    Spacer(Modifier.height(12.dp))
+                                    Surface(
+                                        onClick = onLoadFullDump,
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = Color(0xFF1E1E24),
+                                        border = BorderStroke(1.dp, border)
+                                    ) {
+                                        Text(
+                                            "Load Full Dumpstate",
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                            color = tp,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     } else {
                         Column(
@@ -649,9 +690,8 @@ private fun AdvancedSection(
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 12.sp
                                             ),
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f, fill = false).padding(end = 12.dp)
                                         )
-                                        Spacer(Modifier.width(8.dp))
                                         Text(
                                             entry.value,
                                             color = tp,
@@ -659,7 +699,9 @@ private fun AdvancedSection(
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Medium
-                                            )
+                                            ),
+                                            textAlign = TextAlign.End,
+                                            softWrap = false
                                         )
                                     }
                                 }
@@ -691,8 +733,11 @@ private fun DetailCard(
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
                 title,
-                color = muted,
-                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp)
+                color = textPrimary(),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.2.sp
+                )
             )
             Spacer(Modifier.height(14.dp))
             content()
@@ -705,44 +750,29 @@ private fun DetailRow(
     label: String,
     value: String,
     sublabel: String = "",
-    tag: String? = null,
     valueColor: Color = Color.White,
     isLast: Boolean = false
 ) {
     val border = cardBorderColor()
     val tp = textPrimary()
     val ts = textSecondary()
-    val muted = textMuted()
 
     Column(Modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f).padding(end = 12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        label,
-                        color = tp,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    if (tag != null) {
-                        Spacer(Modifier.width(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = if (tag == "LIVE") Color(0xFF142416) else Color(0xFF261D16),
-                            border = BorderStroke(0.5.dp, if (tag == "LIVE") Color(0xFF00E676) else Color(0xFFFF9800))
-                        ) {
-                            Text(
-                                tag,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                                color = if (tag == "LIVE") Color(0xFF00E676) else Color(0xFFFF9800),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            )
-                        }
-                    }
-                }
+            Column(
+                Modifier
+                    .weight(1f, fill = false)
+                    .padding(end = 16.dp)
+            ) {
+                Text(
+                    label,
+                    color = tp,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
                 if (sublabel.isNotEmpty()) {
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -756,7 +786,9 @@ private fun DetailRow(
             Text(
                 value,
                 color = valueColor,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.End,
+                softWrap = false
             )
         }
 

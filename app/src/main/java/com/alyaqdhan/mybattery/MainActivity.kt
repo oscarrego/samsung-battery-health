@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -290,7 +291,10 @@ private fun BatteryDashboard(
                         Spacer(Modifier.height(16.dp))
                         QuickBatteryInfoCard(effectiveInfo, isLoadingDetail)
                         Spacer(Modifier.height(16.dp))
-                        ViewBatteryDetailsButton(onClick = onNavigateDetails)
+                        ViewBatteryDetailsButton(
+                            isConciseOnly = effectiveInfo.isConciseOnly,
+                            onClick = onNavigateDetails
+                        )
                         Spacer(Modifier.height(12.dp))
                         OneTapDumpstateButton(onRunDumpstate = onRunDumpstate)
                         Spacer(Modifier.height(6.dp))
@@ -305,8 +309,9 @@ private fun BatteryDashboard(
             }
         }
 
-        // Interaction-blocking overlay while loading detail
+        // Interaction-blocking overlay while loading detail, with skip controls on top
         if (isLoadingDetail) {
+            // 1. Scrim layer that prevents interaction with dashboard
             Box(
                 Modifier
                     .fillMaxSize()
@@ -316,6 +321,136 @@ private fun BatteryDashboard(
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                     )
             )
+
+            // 2. Interactive Skip Button (on top of scrim, before 1-minute dialog)
+            androidx.compose.animation.AnimatedVisibility(
+                visible = viewModel.showTakingTooLong && !viewModel.showOneMinuteDialog,
+                enter   = fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 },
+                exit    = fadeOut(tween(200)),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Surface(
+                        onClick = { viewModel.skipToConciseMode() },
+                        shape   = RoundedCornerShape(16.dp),
+                        color   = Color(0xFF16161A),
+                        border  = BorderStroke(1.dp, Color(0xFF2C2C34)),
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, bottom = 44.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    "Taking too long?",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    "Skip for concise details only",
+                                    color = tp,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. One-Minute Dialog with Wait and Skip options (on top of scrim)
+            androidx.compose.animation.AnimatedVisibility(
+                visible = viewModel.showOneMinuteDialog,
+                enter   = fadeIn(tween(250)) + scaleIn(tween(250), initialScale = 0.95f),
+                exit    = fadeOut(tween(180)) + scaleOut(tween(180), targetScale = 0.95f),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.65f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        shape   = RoundedCornerShape(20.dp),
+                        color   = Color(0xFF141418),
+                        border  = BorderStroke(1.dp, Color(0xFF2E2E36)),
+                        shadowElevation = 16.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 28.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "Loading taking longer than usual",
+                                color = tp,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Reading this dumpstate log has taken over 1 minute. Would you like to wait for full details, or skip to concise details now?",
+                                color = textSecondary(),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp)
+                            )
+                            Spacer(Modifier.height(22.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.continueWaiting() },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(46.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF1E1E24),
+                                        contentColor   = tp
+                                    ),
+                                    border = BorderStroke(1.dp, Color(0xFF33333E))
+                                ) {
+                                    Text(
+                                        "Wait",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                                    )
+                                }
+                                Button(
+                                    onClick = { viewModel.skipToConciseMode() },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(46.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White,
+                                        contentColor   = Color.Black
+                                    )
+                                ) {
+                                    Text(
+                                        "Skip",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Log sheet scrim

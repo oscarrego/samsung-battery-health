@@ -42,6 +42,7 @@ object BatteryCache {
             putInt    ("cache_protection_thresh",  info.protectionThreshold ?: -1)
             putString ("cache_auth_result",        info.authResult)
             putString ("cache_raw_battery_dump",   info.rawBatteryDumpText)
+            putBoolean("cache_is_concise_only",    info.isConciseOnly)
         }
     }
 
@@ -103,7 +104,8 @@ object BatteryCache {
             protectionThreshold   = protectionThresh,
             authResult            = prefs.getString("cache_auth_result", "") ?: "",
             rawEntries            = rawEntries,
-            rawBatteryDumpText    = rawDump
+            rawBatteryDumpText    = rawDump,
+            isConciseOnly         = prefs.getBoolean("cache_is_concise_only", false)
         )
     }
 
@@ -139,6 +141,7 @@ object BatteryCache {
             remove("cache_protection_thresh")
             remove("cache_auth_result")
             remove("cache_raw_battery_dump")
+            remove("cache_is_concise_only")
         }
     }
 }

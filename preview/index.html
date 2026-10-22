@@ -233,10 +233,10 @@
     }
 
     .card-label {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
       text-transform: uppercase;
       text-align: center;
     }
@@ -294,18 +294,11 @@
       pointer-events: none;
     }
     .gauge-percent {
-      font-size: 42px;
+      font-size: 46px;
       font-weight: 800;
       color: var(--text-primary);
-      letter-spacing: -0.03em;
+      letter-spacing: -0.04em;
       line-height: 1;
-    }
-    .gauge-status {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent-green);
-      letter-spacing: 0.04em;
-      margin-top: 4px;
     }
 
     .pill {
@@ -313,8 +306,8 @@
       align-items: center;
       border: 1px solid var(--border-card);
       border-radius: 100px;
-      padding: 6px 16px;
-      font-size: 12px;
+      padding: 6px 18px;
+      font-size: 12.5px;
       font-weight: 500;
       color: var(--text-secondary);
     }
@@ -322,15 +315,15 @@
     /* Cycles Card */
     .cycles-card-header { margin-bottom: 16px; }
     .cycles-header-label {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
       text-transform: uppercase;
     }
     .cycles-header-sub {
       font-size: 11px;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       margin-top: 2px;
     }
     .cycles-main-row {
@@ -384,37 +377,38 @@
       color: var(--text-muted);
     }
 
-    /* Section 3: Quick Battery Info Grid */
+    /* Section 3: Quick Battery Info 3-Column Grid */
     .quick-info-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
       margin-top: 14px;
     }
     .quick-tile {
       background: #0E0E11;
       border: 1px solid var(--border-card);
       border-radius: 14px;
-      padding: 14px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
     }
     .quick-tile-label {
-      font-size: 9.5px;
+      font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
       text-transform: uppercase;
     }
     .quick-tile-value {
-      font-size: 20px;
+      font-size: 17px;
       font-weight: 700;
       color: var(--text-primary);
       margin: 6px 0 2px;
       letter-spacing: -0.02em;
+      white-space: nowrap;
     }
     .quick-tile-sub {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
@@ -458,6 +452,93 @@
 
     /* Collapsible setup */
     .setup-card { padding: 0; overflow: hidden; }
+    .skip-btn-card {
+      background: #16161A;
+      border: 1px solid #2C2C34;
+      border-radius: 14px;
+      padding: 12px 18px;
+      text-align: center;
+      cursor: pointer;
+      margin: 14px 0 6px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .skip-btn-card:hover {
+      background: #1F1F24;
+      border-color: #3C3C46;
+    }
+    .skip-btn-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+    .skip-btn-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+
+    .modal-scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+    }
+    .modal-card {
+      background: #141418;
+      border: 1px solid #2E2E36;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.8);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .modal-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .btn-modal-wait {
+      flex: 1;
+      height: 44px;
+      background: #1E1E24;
+      border: 1px solid #33333E;
+      color: var(--text-primary);
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-modal-wait:hover { background: #282830; }
+    .btn-modal-skip {
+      flex: 1;
+      height: 44px;
+      background: #FFFFFF;
+      border: none;
+      color: #000000;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-modal-skip:hover { background: #EDEDED; }
+
     .setup-toggle {
       display: flex;
       align-items: center;
@@ -598,19 +679,20 @@
       padding: 20px;
     }
     .detail-card-title {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
       text-transform: uppercase;
       margin-bottom: 14px;
     }
 
+    /* Robust Detail Row preventing text letters from dropping */
     .detail-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      padding: 10px 0;
+      align-items: center;
+      padding: 11px 0;
       border-bottom: 1px solid #1C1C22;
     }
     .detail-row:last-child {
@@ -619,15 +701,13 @@
     }
     .detail-row-left {
       flex: 1;
-      padding-right: 12px;
+      min-width: 0;
+      padding-right: 16px;
     }
     .detail-row-label {
       font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
     .detail-row-sub {
       font-size: 11px;
@@ -640,26 +720,8 @@
       font-weight: 700;
       color: var(--text-primary);
       text-align: right;
+      flex-shrink: 0;
       white-space: nowrap;
-    }
-
-    .tag-live {
-      font-size: 9px;
-      font-weight: 700;
-      color: #00E676;
-      background: #142416;
-      border: 1px solid #00E676;
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    .tag-peak {
-      font-size: 9px;
-      font-weight: 700;
-      color: #FF9800;
-      background: #261D16;
-      border: 1px solid #FF9800;
-      padding: 1px 5px;
-      border-radius: 4px;
     }
 
     .distinction-banner {
@@ -701,6 +763,7 @@
     .raw-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       background: #0E0E12;
       border: 1px solid var(--border-card);
       border-radius: 8px;
@@ -711,8 +774,22 @@
       transition: background .12s;
     }
     .raw-row:hover { background: #181820; }
-    .raw-key { color: #7A9CC0; }
-    .raw-val { color: #FFF; font-weight: 600; text-align: right; }
+    .raw-key {
+      color: #7A9CC0;
+      flex: 1;
+      min-width: 0;
+      padding-right: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .raw-val {
+      color: #FFF;
+      font-weight: 600;
+      text-align: right;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
 
     /* Toast */
     .toast {
@@ -800,11 +877,10 @@
               </svg>
               <div class="gauge-center">
                 <span class="gauge-percent">83%</span>
-                <span class="gauge-status">Good</span>
               </div>
             </div>
             <div>
-              <span class="pill">Battery is in great condition</span>
+              <span class="pill">Good</span>
             </div>
           </div>
 
@@ -832,7 +908,7 @@
             </div>
           </div>
 
-          <!-- Section 3 -- Quick Battery Information -->
+          <!-- Section 3 -- Quick Battery Information (3 Columns, no status box) -->
           <div class="card">
             <div class="cycles-header-label">Quick Battery Info</div>
             <div class="cycles-header-sub">Live readings from battery service</div>
@@ -840,29 +916,30 @@
               <div class="quick-tile">
                 <span class="quick-tile-label">Level</span>
                 <span class="quick-tile-value">83%</span>
-                <span class="quick-tile-sub">Current charge</span>
+                <span class="quick-tile-sub">Charge</span>
               </div>
               <div class="quick-tile">
-                <span class="quick-tile-label">Temperature</span>
+                <span class="quick-tile-label">Temp</span>
                 <span class="quick-tile-value">29.5 °C</span>
-                <span class="quick-tile-sub">Internal sensor</span>
+                <span class="quick-tile-sub">Sensor</span>
               </div>
               <div class="quick-tile">
                 <span class="quick-tile-label">Voltage</span>
                 <span class="quick-tile-value">4.12 V</span>
-                <span class="quick-tile-sub">Battery potential</span>
-              </div>
-              <div class="quick-tile">
-                <span class="quick-tile-label">Status</span>
-                <span class="quick-tile-value">Discharging</span>
-                <span class="quick-tile-sub">On battery power</span>
+                <span class="quick-tile-sub">Potential</span>
               </div>
             </div>
           </div>
 
+          <!-- Taking Too Long Skip Button Card -->
+          <div class="skip-btn-card" id="skipBtnCard">
+            <div class="skip-btn-sub">Taking too long?</div>
+            <div class="skip-btn-title">Skip for concise details only</div>
+          </div>
+
           <!-- Section 4 -- View Battery Details Button -->
           <button class="btn-details" id="btnGoDetails">
-            <span>View battery details</span>
+            <span id="btnDetailsLabel">View battery details</span>
             <span style="font-size:17px;color:#8E8E93;">›</span>
           </button>
 
@@ -942,35 +1019,35 @@
                 <div class="detail-row-label">ASOC Health Estimate</div>
                 <div class="detail-row-sub">Primary capacity health calculation by Samsung algorithm</div>
               </div>
-              <div class="detail-row-val" style="color:var(--accent-green);">83%</div>
+              <div class="detail-row-val" style="color:var(--accent-green);">83% (Good)</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">BSOH Health Estimate</div>
                 <div class="detail-row-sub">Secondary hardware health register fallback</div>
               </div>
-              <div class="detail-row-val">84%</div>
+              <div class="detail-row-val" style="color:var(--accent-green);">84% (Good)</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Charge Counter</div>
-                <div class="detail-row-sub">Instantaneous coulomb charge (2,841,000 µAh), not total design capacity</div>
+                <div class="detail-row-sub">Coulomb counter: 2,841,000 µAh (instantaneous, not design capacity)</div>
               </div>
               <div class="detail-row-val">2,841 mAh</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Charge Cycles</div>
-                <div class="detail-row-sub">Full charge equivalents</div>
+                <div class="detail-row-sub">Full charge equivalent count</div>
               </div>
               <div class="detail-row-val">119 cycles</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">First-Use / Assembly Date</div>
-                <div class="detail-row-sub">Extracted from LLB CAL hardware calibration registers</div>
+                <div class="detail-row-sub">Calibration register: LLB CAL</div>
               </div>
-              <div class="detail-row-val">15/5/2018 (CAL)</div>
+              <div class="detail-row-val">15/5/2018</div>
             </div>
           </div>
 
@@ -996,7 +1073,7 @@
                 <div class="detail-row-label">Fast Charging</div>
                 <div class="detail-row-sub">Adaptive Fast Charging (AFC) profile</div>
               </div>
-              <div class="detail-row-val">Supported / Inactive</div>
+              <div class="detail-row-val">Supported / Off</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
@@ -1017,7 +1094,7 @@
                 <div class="detail-row-label">Battery Protection Threshold</div>
                 <div class="detail-row-sub">Configured charging cap setting</div>
               </div>
-              <div class="detail-row-val">Limit: 85%</div>
+              <div class="detail-row-val">85%</div>
             </div>
           </div>
 
@@ -1029,35 +1106,35 @@
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Current Temperature <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-label">Current Temperature</div>
                 <div class="detail-row-sub">Internal thermistor sensor reading</div>
               </div>
               <div class="detail-row-val">29.5 °C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Current Voltage <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-label">Current Voltage</div>
                 <div class="detail-row-sub">Cell terminal voltage</div>
               </div>
               <div class="detail-row-val">4.12 V</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Instantaneous Current <span class="tag-live">LIVE</span></div>
+                <div class="detail-row-label">Instantaneous Current</div>
                 <div class="detail-row-sub">Negative when discharging, positive when charging</div>
               </div>
               <div class="detail-row-val">-380 mA</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Highest Recorded Temp <span class="tag-peak">HISTORICAL</span></div>
+                <div class="detail-row-label">Highest Recorded Temperature</div>
                 <div class="detail-row-sub">mSavedBatteryMaxTemp hardware register</div>
               </div>
               <div class="detail-row-val">44.8 °C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Highest Recorded Current <span class="tag-peak">HISTORICAL</span></div>
+                <div class="detail-row-label">Highest Recorded Current</div>
                 <div class="detail-row-sub">mSavedBatteryMaxCurrent hardware register</div>
               </div>
               <div class="detail-row-val">3,450 mA</div>
@@ -1123,21 +1200,30 @@
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
-                <div class="detail-row-label">Log File Name</div>
-                <div class="detail-row-sub">Source log file in /Device/log/</div>
+                <div class="detail-row-label">Dumpstate File Name</div>
+                <div class="detail-row-sub">dumpstate_SM-G965U_20231015_123045.log</div>
               </div>
-              <div class="detail-row-val" style="font-size:11px;">dumpstate_G965U.log</div>
+              <div class="detail-row-val">dumpstate_G965U</div>
             </div>
           </div>
 
           <!-- Section F: Advanced Information -->
           <div class="detail-card">
             <div class="detail-card-title">F. Advanced Information</div>
-            <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;">
-              Raw battery registers parsed from dumpstate. Tap any row to copy its key and value.
+            <div id="conciseBanner" style="display:none;padding:16px 8px;text-align:center;">
+              <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
+                Concise mode active: detailed raw dump was skipped for faster loading.
+              </div>
+              <button id="btnLoadFull" style="margin-top:12px;background:#1C1C22;border:1px solid #33333C;color:#FFF;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">
+                Load Full Dumpstate
+              </button>
             </div>
-            <input type="text" class="raw-search" id="rawSearch" placeholder="Search raw fields...">
-            <div class="raw-list" id="rawList">
+            <div id="rawContentWrap">
+              <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;">
+                Raw battery registers parsed from dumpstate. Tap any row to copy its key and value.
+              </div>
+              <input type="text" class="raw-search" id="rawSearch" placeholder="Search raw fields...">
+              <div class="raw-list" id="rawList">
               <div class="raw-row" data-key="mSavedBatteryAsoc" data-val="83">
                 <span class="raw-key">mSavedBatteryAsoc</span>
                 <span class="raw-val">83</span>
@@ -1203,8 +1289,23 @@
                 <span class="raw-val">true</span>
               </div>
             </div>
+            </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- 1-Minute Loading Dialog Modal -->
+      <div class="modal-scrim" id="oneMinModal" style="display:none;">
+        <div class="modal-card">
+          <div class="modal-title">Loading taking longer than usual</div>
+          <div class="modal-desc">
+            Reading this dumpstate log has taken over 1 minute. Would you like to wait for full details, or skip to concise details now?
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-wait" id="btnModalWait">Wait</button>
+            <button class="btn-modal-skip" id="btnModalSkip">Skip</button>
+          </div>
         </div>
       </div>
 
@@ -1292,6 +1393,59 @@
       setupToggle.addEventListener('click', () => {
         const isOpen = setupBody.classList.toggle('open');
         setupChevron.classList.toggle('open', isOpen);
+      });
+    }
+
+    // Concise mode & Skip Button logic
+    let isConcise = false;
+    const skipBtnCard = document.getElementById('skipBtnCard');
+    const btnDetailsLabel = document.getElementById('btnDetailsLabel');
+    const conciseBanner = document.getElementById('conciseBanner');
+    const rawContentWrap = document.getElementById('rawContentWrap');
+    const btnLoadFull = document.getElementById('btnLoadFull');
+
+    function setConciseMode(active) {
+      isConcise = active;
+      if (active) {
+        btnDetailsLabel.textContent = 'View battery details (Concise)';
+        conciseBanner.style.display = 'block';
+        rawContentWrap.style.display = 'none';
+        skipBtnCard.style.display = 'none';
+        showToast('Concise mode active: main health & cycles loaded');
+      } else {
+        btnDetailsLabel.textContent = 'View battery details';
+        conciseBanner.style.display = 'none';
+        rawContentWrap.style.display = 'block';
+        skipBtnCard.style.display = 'block';
+        showToast('Full dumpstate details loaded');
+      }
+    }
+
+    // Modal Wait / Skip logic
+    const oneMinModal = document.getElementById('oneMinModal');
+    const btnModalWait = document.getElementById('btnModalWait');
+    const btnModalSkip = document.getElementById('btnModalSkip');
+
+    btnModalWait.addEventListener('click', () => {
+      oneMinModal.style.display = 'none';
+      showToast('Continuing to wait for full dumpstate log...');
+    });
+
+    btnModalSkip.addEventListener('click', () => {
+      oneMinModal.style.display = 'none';
+      setConciseMode(true);
+    });
+
+    skipBtnCard.addEventListener('click', () => setConciseMode(true));
+    btnLoadFull.addEventListener('click', () => setConciseMode(false));
+
+    // Interactive preview shortcut: clicking header subtitle tests 1-minute modal
+    const subHeader = document.querySelector('.subtitle');
+    if (subHeader) {
+      subHeader.style.cursor = 'pointer';
+      subHeader.title = 'Click to preview 1-minute timeout dialog';
+      subHeader.addEventListener('click', () => {
+        oneMinModal.style.display = 'flex';
       });
     }
   </script>

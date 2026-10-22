@@ -22,6 +22,7 @@ data class BatteryInfo(
     val logTimestampMs: Long = 0L,
     val readSuccess: Boolean = false,
     val errorMessage: String = "",
+    val isConciseOnly: Boolean = false,
 
     // Quick Information & Live Electrical Readings
     val level: Int? = null,
@@ -104,6 +105,30 @@ data class BatteryInfo(
 
     val bsohPercent: Int?
         get() = bsohRaw.toIntOrNull() ?: if (healthSource == "bsoh") healthPercent else null
+
+    val healthLabel: String
+        get() = getBatteryHealthLabel(healthPercent)
+}
+
+/**
+ * Maps battery health percentage to clear user-facing labels:
+ * 95-100%: Excellent
+ * 90-94%:  Great
+ * 80-89%:  Good
+ * 70-79%:  Fair
+ * 60-69%:  Poor
+ * Below 60%: Very poor
+ */
+fun getBatteryHealthLabel(percent: Int?): String {
+    if (percent == null) return ""
+    return when {
+        percent >= 95 -> "Excellent"
+        percent >= 90 -> "Great"
+        percent >= 80 -> "Good"
+        percent >= 70 -> "Fair"
+        percent >= 60 -> "Poor"
+        else          -> "Very poor"
+    }
 }
 
 data class DocEntry(
