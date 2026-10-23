@@ -1649,6 +1649,18 @@
     (function() {
       var canvas = document.getElementById('capsuleCanvas');
       if (!canvas) return;
+      // roundRect polyfill for older browsers
+      if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+          var r2 = Math.min(r, w/2, h/2);
+          this.moveTo(x+r2, y);
+          this.lineTo(x+w-r2, y); this.arcTo(x+w,y, x+w,y+r2, r2);
+          this.lineTo(x+w, y+h-r2); this.arcTo(x+w,y+h, x+w-r2,y+h, r2);
+          this.lineTo(x+r2, y+h); this.arcTo(x,y+h, x,y+h-r2, r2);
+          this.lineTo(x, y+r2); this.arcTo(x,y, x+r2,y, r2);
+          this.closePath(); return this;
+        };
+      }
       var FILL = 0.83;
       var startTime = null;
       var dpr = window.devicePixelRatio || 1;
@@ -1682,7 +1694,7 @@
 
         // Wave phases (scroll right-to-left = liquid filling)
         var p1 = -(elapsed / 1800) * Math.PI * 2;
-        var p2 = Math.PI + (-(elapsed / 2400) * Math.PI * 2);
+        var p1 = -(elapsed / 1800) * Math.PI * 2;
         var amp = cH * 0.09;
 
 
