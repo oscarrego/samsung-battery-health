@@ -265,8 +265,8 @@
       animation: capGlowPulse 1.8s ease-in-out infinite alternate;
     }
     @keyframes capGlowPulse {
-      0%   { box-shadow: 0 0 10px 2px rgba(0,230,118,0.05); }
-      100% { box-shadow: 0 0 22px 7px rgba(0,230,118,0.14); }
+      0%   { box-shadow: 0 0 10px 2px rgba(255,255,255,0.04); }
+      100% { box-shadow: 0 0 22px 7px rgba(255,255,255,0.10); }
     }
     .capsule-canvas {
       display: block;
@@ -1689,8 +1689,8 @@
         if (fillNow > 0.01) {
           var gAlpha = 0.06 + 0.08 * (0.5 + 0.5 * Math.sin(elapsed / 1800 * Math.PI * 2));
           var gR = ctx.createRadialGradient(cL+fw*0.5, cT+cH*0.5, 0, cL+fw*0.5, cT+cH*0.5, fw*0.8+cH);
-          gR.addColorStop(0, 'rgba(48,209,88,' + gAlpha + ')');
-          gR.addColorStop(1, 'rgba(48,209,88,0)');
+          gR.addColorStop(0, 'rgba(255,255,255,' + gAlpha * 0.5 + ')');
+          gR.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.fillStyle = gR;
           var ge = H*0.10;
           ctx.beginPath(); ctx.roundRect(cL-ge, cT-ge, cW+ge*2, cH+ge*2, cR+ge); ctx.fill();
@@ -1776,15 +1776,15 @@
             var ep = 0.30 + 0.22 * (0.5 + 0.5 * Math.sin(elapsed/1200*Math.PI*2));
             var gE = ctx.createRadialGradient(ex, ecy, 0, ex, ecy, eR);
             gE.addColorStop(0,   'rgba(255,255,255,' + ep + ')');
-            gE.addColorStop(0.4, 'rgba(0,230,118,' + ep*0.5 + ')');
-            gE.addColorStop(0.4, 'rgba(48,209,88,' + ep*0.5 + ')');
-            gE.addColorStop(1,   'rgba(48,209,88,0)');
+            gE.addColorStop(0.4, 'rgba(255,255,255,' + ep*0.3 + ')');
+            gE.addColorStop(1,   'rgba(255,255,255,0)');
+
             ctx.beginPath(); ctx.arc(ex, ecy, eR, 0, Math.PI*2); ctx.fill();
           }
         }
 
         // Border
-        ctx.strokeStyle = fillNow > 0.01 ? 'rgba(48,209,88,0.26)' : 'rgba(30,30,34,0.5)';
+        ctx.strokeStyle = fillNow > 0.01 ? 'rgba(255,255,255,0.18)' : 'rgba(30,30,34,0.5)';
         ctx.lineWidth = Math.max(1, cH * 0.024);
         ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.stroke();
 

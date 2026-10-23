@@ -1,4 +1,4 @@
-package com.alyaqdhan.mybattery
+﻿package com.alyaqdhan.mybattery
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -218,11 +218,11 @@ fun CapsuleBatteryGauge(
         val fillFrac = (if (isLoading) loadProg else progress).coerceIn(0f, 1f)
         val fw = cW * fillFrac
 
-        // -- 1. Outer glow --
+        // -- 1. Outer glow -- white, not green
         if (fillFrac > 0.02f) {
             val ge = h * 0.12f
             drawRoundRect(
-                color        = fillColor.copy(alpha = glowAlpha),
+                color        = Color.White.copy(alpha = glowAlpha * 0.5f),
                 topLeft      = Offset(cL - ge, cT - ge),
                 size         = Size(cW + ge * 2f, cH + ge * 2f),
                 cornerRadius = CornerRadius(cR + ge, cR + ge)
@@ -373,7 +373,7 @@ fun CapsuleBatteryGauge(
                     brush = Brush.radialGradient(
                         colors = listOf(
                             Color.White.copy(alpha = 0.40f),
-                            fillColor.copy(alpha = 0.20f),
+                            Color.White.copy(alpha = 0.12f),
                             Color.Transparent
                         ),
                         center = Offset(ex, cT + cH / 2f),
@@ -385,9 +385,9 @@ fun CapsuleBatteryGauge(
             }
         }
 
-        // -- 5. Capsule border --
+        // -- 5. Capsule border -- white, not green
         drawRoundRect(
-            color        = if (fillFrac > 0.02f) fillColor.copy(alpha = 0.28f)
+            color        = if (fillFrac > 0.02f) Color.White.copy(alpha = 0.18f)
                            else Color(0xFF2A2A30),
             topLeft      = Offset(cL, cT),
             size         = Size(cW, cH),
@@ -557,7 +557,7 @@ fun QuickBatteryInfoCard(
 
     val tempText = when {
         isLoading -> "--"
-        info.temperatureC != null -> String.format(Locale.US, "%.1fÂ°C", info.temperatureC)
+        info.temperatureC != null -> String.format(Locale.US, "%.1fÃ‚Â°C", info.temperatureC)
         else -> "--"
     }
 
