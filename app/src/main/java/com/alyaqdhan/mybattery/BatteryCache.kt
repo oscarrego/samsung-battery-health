@@ -62,7 +62,7 @@ object BatteryCache {
         val rawDump = prefs.getString("cache_raw_battery_dump", "") ?: ""
 
         val rawEntries = if (rawDump.isNotBlank()) {
-            rawDump.lines().mapNotNull { line ->
+            val list = rawDump.lines().mapNotNull { line ->
                 val trimmed = line.trim()
                 if (trimmed.contains(":") && !trimmed.startsWith("[") && !trimmed.startsWith("━") && !trimmed.startsWith("=")) {
                     val k = trimmed.substringBefore(":").trim()
@@ -70,6 +70,10 @@ object BatteryCache {
                     if (k.isNotEmpty() && v.isNotEmpty()) RawDumpEntry(k, v) else null
                 } else null
             }
+            val cutoff = list.indexOfFirst {
+                it.key.contains("FullStatusDuration", ignoreCase = true)
+            }
+            if (cutoff != -1) list.subList(0, cutoff + 1) else list
         } else emptyList()
 
         return BatteryInfo(

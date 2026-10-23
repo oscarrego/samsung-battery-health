@@ -384,7 +384,7 @@
       gap: 10px;
     }
     .metric-card {
-      background: #101013;
+      background: var(--bg-card);
       border: 1px solid var(--border-card);
       border-radius: 18px;
       padding: 16px 14px;
@@ -418,9 +418,9 @@
     .btn-details {
       width: 100%;
       height: 52px;
-      background: #16161A;
+      background: var(--bg-card);
       color: var(--text-primary);
-      border: 1px solid #282830;
+      border: 1px solid var(--border-card);
       border-radius: 14px;
       padding: 0 18px;
       font-size: 15px;
@@ -432,7 +432,7 @@
       transition: background .15s;
     }
     .btn-details:hover {
-      background: #1E1E24;
+      background: #18181D;
     }
 
     .btn-run {
@@ -681,7 +681,7 @@
       font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.12em;
-      color: var(--text-primary);
+      color: var(--text-secondary);
       text-transform: uppercase;
       margin-bottom: 14px;
     }
@@ -1057,9 +1057,9 @@
             </div>
           </div>
 
-          <!-- Section 4: View Battery Details Button -->
+          <!-- Section 4: View More Button -->
           <button class="btn-details" id="btnGoDetails">
-            <span id="btnDetailsLabel">View battery details</span>
+            <span id="btnDetailsLabel">View more details</span>
             <span style="font-size:17px;color:#8E8E93;">›</span>
           </button>
           <div style="text-align:center;font-size:11px;color:rgba(142,142,147,0.45);margin:6px 0 2px;">v 1.0</div>
@@ -1129,9 +1129,9 @@
 
         <div class="details-content">
 
-          <!-- Section A: Battery Capacity -->
+          <!-- Battery Capacity -->
           <div class="detail-card">
-            <div class="detail-card-title">A. Battery Capacity</div>
+            <div class="detail-card-title">Battery Capacity</div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">ASOC Health Estimate</div>
@@ -1169,9 +1169,9 @@
             </div>
           </div>
 
-          <!-- Section B: Charging Information -->
+          <!-- Charging Information -->
           <div class="detail-card">
-            <div class="detail-card-title">B. Charging Information</div>
+            <div class="detail-card-title">Charging Information</div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Current Charging State</div>
@@ -1216,9 +1216,9 @@
             </div>
           </div>
 
-          <!-- Section C: Temperature & Electrical Readings -->
+          <!-- Temperature & Electrical Readings -->
           <div class="detail-card">
-            <div class="detail-card-title">C. Temperature & Electrical Readings</div>
+            <div class="detail-card-title">Temperature & Electrical Readings</div>
             <div class="distinction-banner">
               Live readings reflect current state at log capture. Peak readings represent lifetime historical maximums recorded by the battery controller.
             </div>
@@ -1259,9 +1259,9 @@
             </div>
           </div>
 
-          <!-- Section D: Battery Protection -->
+          <!-- Battery Protection -->
           <div class="detail-card">
-            <div class="detail-card-title">D. Battery Protection</div>
+            <div class="detail-card-title">Battery Protection</div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Protection Mode</div>
@@ -1292,9 +1292,9 @@
             </div>
           </div>
 
-          <!-- Section E: Battery Information -->
+          <!-- Battery Information -->
           <div class="detail-card">
-            <div class="detail-card-title">E. Battery Information</div>
+            <div class="detail-card-title">Battery Information</div>
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Technology</div>
@@ -1325,9 +1325,9 @@
             </div>
           </div>
 
-          <!-- Section F: Advanced Information -->
+          <!-- Advanced Information -->
           <div class="detail-card">
-            <div class="detail-card-title">F. Advanced Information</div>
+            <div class="detail-card-title">Advanced Information</div>
             <div id="conciseBanner" style="display:none;padding:16px 8px;text-align:center;">
               <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
                 Concise mode active: detailed raw dump was skipped for faster loading.
@@ -1362,49 +1362,9 @@
                 <span class="raw-key">mSavedBatteryMaxCurrent</span>
                 <span class="raw-val">3450</span>
               </div>
-              <div class="raw-row" data-key="level" data-val="83">
-                <span class="raw-key">level</span>
-                <span class="raw-val">83</span>
-              </div>
-              <div class="raw-row" data-key="scale" data-val="100">
-                <span class="raw-key">scale</span>
-                <span class="raw-val">100</span>
-              </div>
-              <div class="raw-row" data-key="voltage" data-val="4120">
-                <span class="raw-key">voltage</span>
-                <span class="raw-val">4120</span>
-              </div>
-              <div class="raw-row" data-key="temperature" data-val="295">
-                <span class="raw-key">temperature</span>
-                <span class="raw-val">295</span>
-              </div>
-              <div class="raw-row" data-key="status" data-val="3">
-                <span class="raw-key">status</span>
-                <span class="raw-val">3</span>
-              </div>
-              <div class="raw-row" data-key="health" data-val="2">
-                <span class="raw-key">health</span>
-                <span class="raw-val">2</span>
-              </div>
-              <div class="raw-row" data-key="technology" data-val="Li-ion">
-                <span class="raw-key">technology</span>
-                <span class="raw-val">Li-ion</span>
-              </div>
-              <div class="raw-row" data-key="Charge counter" data-val="2841000">
-                <span class="raw-key">Charge counter</span>
-                <span class="raw-val">2841000</span>
-              </div>
-              <div class="raw-row" data-key="mBatteryProtection" data-val="1">
-                <span class="raw-key">mBatteryProtection</span>
-                <span class="raw-val">1</span>
-              </div>
-              <div class="raw-row" data-key="mProtectionThreshold" data-val="85">
-                <span class="raw-key">mProtectionThreshold</span>
-                <span class="raw-val">85</span>
-              </div>
-              <div class="raw-row" data-key="mFastCharging" data-val="true">
-                <span class="raw-key">mFastCharging</span>
-                <span class="raw-val">true</span>
+              <div class="raw-row" data-key="mSavedFullStatusDuration" data-val="12450">
+                <span class="raw-key">mSavedFullStatusDuration</span>
+                <span class="raw-val">12450</span>
               </div>
             </div>
             </div>
@@ -1582,13 +1542,13 @@
     function setConciseMode(active) {
       isConcise = active;
       if (active) {
-        btnDetailsLabel.textContent = 'View battery details';
+        btnDetailsLabel.textContent = 'View more details';
         conciseBanner.style.display = 'block';
         rawContentWrap.style.display = 'none';
         if (skipBtnCard) skipBtnCard.style.display = 'none';
         showToast('Summary mode active: key health & cycles loaded');
       } else {
-        btnDetailsLabel.textContent = 'View battery details';
+        btnDetailsLabel.textContent = 'View more details';
         conciseBanner.style.display = 'none';
         rawContentWrap.style.display = 'block';
         if (skipBtnCard) skipBtnCard.style.display = 'block';

@@ -214,7 +214,7 @@ private fun BatteryDetailsScreen(
 }
 
 // -----------------------------------------------------------------------------
-// Section A: Battery Capacity
+// Battery Capacity
 // -----------------------------------------------------------------------------
 @Composable
 private fun CapacitySection(
@@ -225,7 +225,7 @@ private fun CapacitySection(
     muted: Color,
     green: Color
 ) {
-    DetailCard(title = "A. BATTERY CAPACITY", border = border, muted = muted) {
+    DetailCard(title = "BATTERY CAPACITY", border = border, muted = muted) {
         val asocLabel = info.asocPercent?.let { getBatteryHealthLabel(it) } ?: ""
         val asocDisplay = info.asocPercent?.let { if (asocLabel.isNotBlank()) "$it% ($asocLabel)" else "$it%" } ?: info.asocRaw.ifBlank { "--" }
         val asocColor = when {
@@ -297,7 +297,7 @@ private fun CapacitySection(
 }
 
 // -----------------------------------------------------------------------------
-// Section B: Charging Information
+// Charging Information
 // -----------------------------------------------------------------------------
 @Composable
 private fun ChargingSection(
@@ -307,7 +307,7 @@ private fun ChargingSection(
     ts: Color,
     muted: Color
 ) {
-    DetailCard(title = "B. CHARGING INFORMATION", border = border, muted = muted) {
+    DetailCard(title = "CHARGING INFORMATION", border = border, muted = muted) {
         DetailRow(
             label = "Current Charging State",
             value = info.status.ifBlank { "Not charging" },
@@ -357,7 +357,7 @@ private fun ChargingSection(
 }
 
 // -----------------------------------------------------------------------------
-// Section C: Temperature and Electrical Readings
+// Temperature and Electrical Readings
 // -----------------------------------------------------------------------------
 @Composable
 private fun ElectricalReadingsSection(
@@ -367,7 +367,7 @@ private fun ElectricalReadingsSection(
     ts: Color,
     muted: Color
 ) {
-    DetailCard(title = "C. TEMPERATURE AND ELECTRICAL READINGS", border = border, muted = muted) {
+    DetailCard(title = "TEMPERATURE AND ELECTRICAL READINGS", border = border, muted = muted) {
         // Notice distinguishing live vs historical
         Surface(
             shape = RoundedCornerShape(10.dp),
@@ -427,7 +427,7 @@ private fun ElectricalReadingsSection(
 }
 
 // -----------------------------------------------------------------------------
-// Section D: Battery Protection
+// Battery Protection
 // -----------------------------------------------------------------------------
 @Composable
 private fun ProtectionSection(
@@ -437,7 +437,7 @@ private fun ProtectionSection(
     ts: Color,
     muted: Color
 ) {
-    DetailCard(title = "D. BATTERY PROTECTION", border = border, muted = muted) {
+    DetailCard(title = "BATTERY PROTECTION", border = border, muted = muted) {
         val mode = when {
             info.protectionMode.isNotBlank() -> info.protectionMode
             info.protectionThreshold != null -> "Enabled"
@@ -482,7 +482,7 @@ private fun ProtectionSection(
 }
 
 // -----------------------------------------------------------------------------
-// Section E: Battery Information
+// Battery Information
 // -----------------------------------------------------------------------------
 @Composable
 private fun BatteryMetaSection(
@@ -492,7 +492,7 @@ private fun BatteryMetaSection(
     ts: Color,
     muted: Color
 ) {
-    DetailCard(title = "E. BATTERY INFORMATION", border = border, muted = muted) {
+    DetailCard(title = "BATTERY INFORMATION", border = border, muted = muted) {
         DetailRow(
             label = "Technology",
             value = info.technology.ifBlank { "Li-ion" },
@@ -533,7 +533,7 @@ private fun BatteryMetaSection(
 }
 
 // -----------------------------------------------------------------------------
-// Section F: Advanced Information (Raw Battery Fields)
+// Advanced Information (Raw Battery Fields)
 // -----------------------------------------------------------------------------
 @Composable
 private fun AdvancedSection(
@@ -549,7 +549,17 @@ private fun AdvancedSection(
     ts: Color,
     muted: Color
 ) {
-    val rawEntries = info.rawEntries
+    val rawEntries = remember(info.rawEntries) {
+        val list = info.rawEntries
+        val cutoffIndex = list.indexOfFirst {
+            it.key.contains("FullStatusDuration", ignoreCase = true)
+        }
+        if (cutoffIndex != -1) {
+            list.subList(0, cutoffIndex + 1)
+        } else {
+            list
+        }
+    }
     val filteredEntries = remember(rawEntries, searchQuery) {
         if (searchQuery.isBlank()) rawEntries
         else {
@@ -572,8 +582,8 @@ private fun AdvancedSection(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "F. ADVANCED INFORMATION",
-                        color = tp,
+                        "ADVANCED INFORMATION",
+                        color = ts,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 1.2.sp
@@ -740,7 +750,7 @@ private fun DetailCard(
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
                 title,
-                color = textPrimary(),
+                color = textSecondary(),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.2.sp

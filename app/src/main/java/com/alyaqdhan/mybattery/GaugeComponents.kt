@@ -481,7 +481,7 @@ private fun QuickInfoTile(
     Surface(
         modifier = modifier,
         shape    = RoundedCornerShape(18.dp),
-        color    = Color(0xFF101013),
+        color    = MaterialTheme.colorScheme.surface,
         border   = BorderStroke(1.dp, border)
     ) {
         Column(
@@ -529,6 +529,7 @@ fun ViewBatteryDetailsButton(
     isConciseOnly: Boolean = false,
     onClick: () -> Unit
 ) {
+    val border = cardBorderColor()
     Button(
         onClick   = onClick,
         modifier  = Modifier
@@ -536,10 +537,10 @@ fun ViewBatteryDetailsButton(
             .height(52.dp),
         shape     = RoundedCornerShape(14.dp),
         colors    = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF16161A),
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor   = Color.White
         ),
-        border    = BorderStroke(1.dp, Color(0xFF282830)),
+        border    = BorderStroke(1.dp, border),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -549,7 +550,7 @@ fun ViewBatteryDetailsButton(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "View battery details",
+                    "View more details",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 15.sp

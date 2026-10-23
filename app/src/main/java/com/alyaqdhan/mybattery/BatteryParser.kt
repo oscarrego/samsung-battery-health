@@ -673,6 +673,13 @@ object BatteryParser {
         val readSuccess = resolvedHealth != null || bsoh != null || usage != null ||
                 batteryDateMs != 0L || asocSeen || level != null || temperatureC != null
 
+        val displayRawEntries = run {
+            val cutoff = rawEntries.indexOfFirst {
+                it.key.contains("FullStatusDuration", ignoreCase = true)
+            }
+            if (cutoff != -1) rawEntries.subList(0, cutoff + 1) else rawEntries
+        }
+
         return BatteryInfo(
             healthPercent         = resolvedHealth,
             healthSource          = healthSource,
@@ -708,7 +715,7 @@ object BatteryParser {
             protectionMode        = protectionMode,
             protectionThreshold   = protectionThreshold,
             authResult            = authResult,
-            rawEntries            = rawEntries,
+            rawEntries            = displayRawEntries,
             rawBatteryDumpText    = rawDumpLines.toString().trim()
         )
     }
