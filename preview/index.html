@@ -265,8 +265,8 @@
       animation: capGlowPulse 1.8s ease-in-out infinite alternate;
     }
     @keyframes capGlowPulse {
-      0%   { box-shadow: 0 0 10px 2px rgba(255,255,255,0.04); }
-      100% { box-shadow: 0 0 22px 7px rgba(255,255,255,0.10); }
+      0%   { box-shadow: none; }
+      100% { box-shadow: none; }
     }
     .capsule-canvas {
       display: block;
@@ -1685,16 +1685,16 @@
         var p2 = Math.PI + (-(elapsed / 2400) * Math.PI * 2);
         var amp = cH * 0.09;
 
-        // 1. Outer glow
-        if (fillNow > 0.01) {
-          var gAlpha = 0.06 + 0.08 * (0.5 + 0.5 * Math.sin(elapsed / 1800 * Math.PI * 2));
-          var gR = ctx.createRadialGradient(cL+fw*0.5, cT+cH*0.5, 0, cL+fw*0.5, cT+cH*0.5, fw*0.8+cH);
-          gR.addColorStop(0, 'rgba(255,255,255,' + gAlpha * 0.5 + ')');
-          gR.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.fillStyle = gR;
-          var ge = H*0.10;
-          ctx.beginPath(); ctx.roundRect(cL-ge, cT-ge, cW+ge*2, cH+ge*2, cR+ge); ctx.fill();
-        }
+
+
+
+
+
+
+
+
+
+
 
         // 2. Dark track
         ctx.fillStyle = '#1E1E22';
@@ -1770,23 +1770,23 @@
 
           ctx.restore();
 
-          // Soft radial edge glow
-          if (fillNow > 0.03 && fillNow < 0.97) {
-            var ex = cL + fw, ecy = cT + cH*0.5, eR = cH*0.60;
-            var ep = 0.30 + 0.22 * (0.5 + 0.5 * Math.sin(elapsed/1200*Math.PI*2));
-            var gE = ctx.createRadialGradient(ex, ecy, 0, ex, ecy, eR);
-            gE.addColorStop(0,   'rgba(255,255,255,' + ep + ')');
-            gE.addColorStop(0.4, 'rgba(255,255,255,' + ep*0.3 + ')');
-            gE.addColorStop(1,   'rgba(255,255,255,0)');
 
-            ctx.beginPath(); ctx.arc(ex, ecy, eR, 0, Math.PI*2); ctx.fill();
-          }
+
+
+
+
+
+
+
+
+
+
         }
 
         // Border
-        ctx.strokeStyle = fillNow > 0.01 ? 'rgba(255,255,255,0.18)' : 'rgba(30,30,34,0.5)';
-        ctx.lineWidth = Math.max(1, cH * 0.024);
-        ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.stroke();
+        // Border - thick white
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = Math.max(2, cH * 0.055);
 
         requestAnimationFrame(frame);
       }

@@ -218,16 +218,16 @@ fun CapsuleBatteryGauge(
         val fillFrac = (if (isLoading) loadProg else progress).coerceIn(0f, 1f)
         val fw = cW * fillFrac
 
-        // -- 1. Outer glow -- white, not green
-        if (fillFrac > 0.02f) {
-            val ge = h * 0.12f
-            drawRoundRect(
-                color        = Color.White.copy(alpha = glowAlpha * 0.5f),
-                topLeft      = Offset(cL - ge, cT - ge),
-                size         = Size(cW + ge * 2f, cH + ge * 2f),
-                cornerRadius = CornerRadius(cR + ge, cR + ge)
-            )
-        }
+
+
+
+
+
+
+
+
+
+
 
         // -- 2. Dark track --
         drawRoundRect(
@@ -365,34 +365,34 @@ fun CapsuleBatteryGauge(
                 )
             }
 
-            // Bright rim glow at the wave boundary (soft radial, no hard line)
-            if (fillFrac in 0.04f..0.96f) {
-                val ex = cL + fw
-                val eR = cH * 0.70f
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.40f),
-                            Color.White.copy(alpha = 0.12f),
-                            Color.Transparent
-                        ),
-                        center = Offset(ex, cT + cH / 2f),
-                        radius = eR
-                    ),
-                    center = Offset(ex, cT + cH / 2f),
-                    radius = eR
-                )
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
         // -- 5. Capsule border -- white, not green
+        // -- 5. Capsule border -- thick white
         drawRoundRect(
-            color        = if (fillFrac > 0.02f) Color.White.copy(alpha = 0.18f)
-                           else Color(0xFF2A2A30),
-            topLeft      = Offset(cL, cT),
+            color        = Color.White.copy(alpha = 0.55f),
+
             size         = Size(cW, cH),
             cornerRadius = capCR,
-            style        = Stroke(width = cH * 0.022f)
+            style        = Stroke(width = cH * 0.055f)
         )
     }
 }
