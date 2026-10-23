@@ -385,18 +385,20 @@ fun CapsuleBatteryGauge(
 
         }
 
-        // -- 5. Capsule border -- white, not green
-        // -- 5. Capsule border -- thick white
+
+        // -- 5. Capsule border -- thick white, inset so stroke sits on the edge
+        val strokeW = cH * 0.055f
+        val half    = strokeW / 2f
         drawRoundRect(
             color        = Color.White.copy(alpha = 0.55f),
-
-            size         = Size(cW, cH),
-            cornerRadius = capCR,
-            style        = Stroke(width = cH * 0.055f)
+            topLeft      = Offset(cL + half, cT + half),
+            size         = Size(cW - strokeW, cH - strokeW),
+            cornerRadius = CornerRadius(cR - half, cR - half),
+            style        = Stroke(width = strokeW)
         )
+
     }
 }
-
 @Composable
 fun CycleCountCard(
     info: BatteryInfo,
