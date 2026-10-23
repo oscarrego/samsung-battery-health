@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -241,64 +241,37 @@
       text-align: center;
     }
 
-    /* Gauge */
+        /* Gauge - Liquid Wave Capsule */
     .health-card { padding: 24px 20px; text-align: center; }
-    .gauge-wrap {
-      display: flex;
-      justify-content: center;
-      margin: 20px 0 16px;
-      position: relative;
-    }
-    .gauge-svg {
-      width: 190px;
-      height: 190px;
-      transform: rotate(-90deg);
-    }
-    .gauge-track {
-      fill: none;
-      stroke: var(--track-color);
-      stroke-width: 12;
-    }
-    .gauge-arc {
-      fill: none;
-      stroke: var(--accent-green);
-      stroke-width: 12;
-      stroke-linecap: round;
-      stroke-dasharray: 477.5;
-      stroke-dashoffset: 477.5;
-      animation: arcFill 1.4s cubic-bezier(.4,0,.2,1) forwards, gaugeGlow 2.4s ease-in-out infinite 1.4s;
-    }
-
-    @keyframes arcFill {
-      to { stroke-dashoffset: 81.2; }
-    }
-    @keyframes gaugeGlow {
-      0%, 100% {
-        stroke: #00E676;
-        filter: drop-shadow(0 0 2px rgba(0, 230, 118, 0.4));
-      }
-      50% {
-        stroke: #38ef7d;
-        filter: drop-shadow(0 0 12px rgba(0, 230, 118, 0.95));
-      }
-    }
-
-    .gauge-center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      pointer-events: none;
-    }
     .gauge-percent {
       font-size: 46px;
       font-weight: 800;
       color: var(--text-primary);
       letter-spacing: -0.04em;
       line-height: 1;
+      margin: 20px 0 16px;
+    }
+    .gauge-wrap {
+      position: relative;
+      width: 100%;
+      height: 44px;
+      margin: 16px 0 16px;
+    }
+    .capsule-glow {
+      position: absolute;
+      inset: -5px;
+      border-radius: 28px;
+      pointer-events: none;
+      animation: capGlowPulse 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes capGlowPulse {
+      0%   { box-shadow: 0 0 10px 2px rgba(0,230,118,0.05); }
+      100% { box-shadow: 0 0 22px 7px rgba(0,230,118,0.14); }
+    }
+    .capsule-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
     }
 
     .pill {
@@ -982,29 +955,23 @@
         <div class="app-header">
           <div class="header-center">
             <span class="header-title">Battery Health</span>
-            <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago · Installed 15/5/2018</span>
+            <span class="header-subtitle">dumpstate_G965U<br>Log created 4 hours ago Â· Installed 15/5/2018</span>
           </div>
         </div>
 
         <div class="content">
 
-          <!-- Section 1 -- Battery Health -->
+
+          <!-- Section 1 -- Battery Health (Liquid Wave Capsule) -->
           <div class="card health-card">
-            <div class="card-label">Battery Health</div>
+
+            <div class="gauge-percent">83%</div>
+            <div><span class="pill">Good condition</span></div>
             <div class="gauge-wrap">
-              <svg class="gauge-svg" viewBox="0 0 180 180">
-                <circle class="gauge-track" cx="90" cy="90" r="76"/>
-                <circle class="gauge-arc" cx="90" cy="90" r="76"/>
-              </svg>
-              <div class="gauge-center">
-                <span class="gauge-percent">83%</span>
-              </div>
-            </div>
-            <div>
-              <span class="pill">Good condition</span>
+              <div class="capsule-glow"></div>
+              <canvas class="capsule-canvas" id="capsuleCanvas"></canvas>
             </div>
           </div>
-
           <!-- Section 2: Metric Cards (Charge, Temperature, Voltage) -->
           <div class="metric-cards-row">
             <div class="metric-card">
@@ -1021,7 +988,7 @@
                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
                 <circle cx="11.5" cy="17.5" r="2" fill="currentColor" stroke="none"/>
               </svg>
-              <span class="metric-card-value">29.5°C</span>
+              <span class="metric-card-value">29.5Â°C</span>
               <span class="metric-card-label">Temperature</span>
             </div>
             <div class="metric-card">
@@ -1060,7 +1027,7 @@
           <!-- Section 4: View More Button -->
           <button class="btn-details" id="btnGoDetails">
             <span id="btnDetailsLabel">View more details</span>
-            <span style="font-size:17px;color:#8E8E93;">›</span>
+            <span style="font-size:17px;color:#8E8E93;">â€º</span>
           </button>
           <div style="text-align:center;font-size:11px;color:rgba(142,142,147,0.45);margin:6px 0 2px;">v 1.0</div>
 
@@ -1068,13 +1035,13 @@
           <div class="card setup-card">
             <div class="setup-toggle" id="setupToggle">
               <div class="setup-toggle-left">
-                <div class="setup-toggle-icon">📋</div>
+                <div class="setup-toggle-icon">ðŸ“‹</div>
                 <div>
                   <div class="setup-toggle-label">How to get your log</div>
-                  <div class="setup-toggle-sub">4 STEPS · MANUAL SETUP</div>
+                  <div class="setup-toggle-sub">4 STEPS Â· MANUAL SETUP</div>
                 </div>
               </div>
-              <span class="setup-chevron open" id="setupChevron">▼</span>
+              <span class="setup-chevron open" id="setupChevron">â–¼</span>
             </div>
             <div class="setup-body open" id="setupBody">
               <div class="setup-inner">
@@ -1119,10 +1086,10 @@
       <!-- ======================================================= -->
       <div class="screen-view" id="viewDetails">
         <div class="details-header">
-          <button class="back-btn" id="btnBackToMain">‹</button>
+          <button class="back-btn" id="btnBackToMain">â€¹</button>
           <div style="flex:1;padding-left:6px;">
             <div class="details-header-title">Battery Details</div>
-            <div class="details-header-sub">dumpstate_G965U · 4 hours ago</div>
+            <div class="details-header-sub">dumpstate_G965U Â· 4 hours ago</div>
           </div>
           <button class="copy-dump-btn" id="btnCopyDump">Copy Dump</button>
         </div>
@@ -1149,7 +1116,7 @@
             <div class="detail-row">
               <div class="detail-row-left">
                 <div class="detail-row-label">Charge Counter</div>
-                <div class="detail-row-sub">Coulomb counter: 2,841,000 µAh (instantaneous, not design capacity)</div>
+                <div class="detail-row-sub">Coulomb counter: 2,841,000 ÂµAh (instantaneous, not design capacity)</div>
               </div>
               <div class="detail-row-val">2,841 mAh</div>
             </div>
@@ -1227,7 +1194,7 @@
                 <div class="detail-row-label">Current Temperature</div>
                 <div class="detail-row-sub">Internal thermistor sensor reading</div>
               </div>
-              <div class="detail-row-val">29.5 °C</div>
+              <div class="detail-row-val">29.5 Â°C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
@@ -1248,7 +1215,7 @@
                 <div class="detail-row-label">Highest Recorded Temperature</div>
                 <div class="detail-row-sub">mSavedBatteryMaxTemp hardware register</div>
               </div>
-              <div class="detail-row-val">44.8 °C</div>
+              <div class="detail-row-val">44.8 Â°C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
@@ -1425,7 +1392,7 @@
             <div class="log-item-row active">
               <div>
                 <div class="log-item-name">dumpstate_G965U</div>
-                <div class="log-item-time">4 hours ago · Current Log</div>
+                <div class="log-item-time">4 hours ago Â· Current Log</div>
               </div>
             </div>
             <div class="log-item-row">
@@ -1678,6 +1645,157 @@
         oneMinModal.style.display = 'flex';
       });
     }
+    // ---- Liquid Wave Capsule Canvas Animation ----
+    (function() {
+      var canvas = document.getElementById('capsuleCanvas');
+      if (!canvas) return;
+      var FILL = 0.83;
+      var startTime = null;
+      var dpr = window.devicePixelRatio || 1;
+
+      function resize() {
+        var r = canvas.parentElement.getBoundingClientRect();
+        canvas.width  = r.width  * dpr;
+        canvas.height = r.height * dpr;
+        canvas.style.width  = r.width  + 'px';
+        canvas.style.height = r.height + 'px';
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function ease(t) { return 1 - Math.pow(1 - Math.min(t, 1), 3); }
+
+      function frame(ts) {
+        if (!startTime) startTime = ts;
+        var elapsed = ts - startTime;
+        var fillNow = ease(elapsed / 1400) * FILL;
+
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        var pad = H * 0.10;
+        var cL = pad, cT = pad;
+        var cW = W - pad*2, cH = H - pad*2;
+        var cR = cH / 2;
+        var fw = cW * fillNow;
+
+        // Wave phases (scroll right-to-left = liquid filling)
+        var p1 = -(elapsed / 1800) * Math.PI * 2;
+        var p2 = Math.PI + (-(elapsed / 2400) * Math.PI * 2);
+        var amp = cH * 0.28;
+
+        // 1. Outer glow
+        if (fillNow > 0.01) {
+          var gAlpha = 0.06 + 0.08 * (0.5 + 0.5 * Math.sin(elapsed / 1800 * Math.PI * 2));
+          var gR = ctx.createRadialGradient(cL+fw*0.5, cT+cH*0.5, 0, cL+fw*0.5, cT+cH*0.5, fw*0.8+cH);
+          gR.addColorStop(0, 'rgba(48,209,88,' + gAlpha + ')');
+          gR.addColorStop(1, 'rgba(48,209,88,0)');
+          ctx.fillStyle = gR;
+          var ge = H*0.10;
+          ctx.beginPath(); ctx.roundRect(cL-ge, cT-ge, cW+ge*2, cH+ge*2, cR+ge); ctx.fill();
+        }
+
+        // 2. Dark track
+        ctx.fillStyle = '#1E1E22';
+        ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.fill();
+
+        // 3. Dot grid on unfilled area
+        ctx.fillStyle = 'rgba(68,68,72,0.45)';
+        var ds = cH * 0.19, dr = cH * 0.020;
+        for (var dx = cL + fw + ds*1.5; dx < cL+cW-dr; dx += ds) {
+          for (var dy = cT+ds; dy < cT+cH-dr; dy += ds) {
+            var relX=dx-cL, relY=dy-cT;
+            var mD = Math.min(relX, cW-relX, relY, cH-relY);
+            if (mD > cR*0.12 || (relX>cR && cW-relX>cR)) {
+              ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.fill();
+            }
+          }
+        }
+
+        // 4. Liquid fill with sine-wave leading edge
+        if (fw > 1) {
+          // Clip to capsule
+          ctx.save();
+          ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.clip();
+
+          // Wave path - VERTICAL sine wave on right edge of fill
+          var STEPS = 100;
+
+          ctx.beginPath();
+          ctx.moveTo(cL, cT);
+          ctx.lineTo(cL + fw, cT);
+
+          for (var i = 0; i <= STEPS; i++) {
+            var t  = i / STEPS;
+            var yp = cT + t * cH;
+            var x1 = Math.sin(t * 2.0 * Math.PI + p1);
+            var xp = cL + fw + x1 * amp;
+
+            ctx.lineTo(xp, yp);
+          }
+
+          ctx.lineTo(cL, cT + cH);
+          ctx.closePath();
+
+          // Horizontal liquid gradient
+          var gH = ctx.createLinearGradient(cL, 0, cL+cW, 0);
+          gH.addColorStop(0.00, '#FF3B30');
+          gH.addColorStop(0.33, '#FF8C00');
+          gH.addColorStop(0.62, '#FFD60A');
+          gH.addColorStop(1.00, '#30D158');
+          ctx.fillStyle = gH;
+          ctx.fill();
+
+          // Glass sheen (vertical)
+          var gV = ctx.createLinearGradient(0, cT, 0, cT+cH*0.55);
+          gV.addColorStop(0,   'rgba(255,255,255,0.22)');
+          gV.addColorStop(0.6, 'rgba(255,255,255,0.05)');
+          gV.addColorStop(1,   'rgba(255,255,255,0)');
+          ctx.fillStyle = gV;
+          ctx.fill();
+
+          // Shimmer band
+          var sp = (elapsed % 3000) / 3000;
+          var sw = cW * 0.22;
+          var sx = cL + (cW + sw) * sp - sw;
+          var gS = ctx.createLinearGradient(sx, 0, sx+sw, 0);
+          gS.addColorStop(0,   'rgba(255,255,255,0)');
+          gS.addColorStop(0.4, 'rgba(255,255,255,0.05)');
+          gS.addColorStop(0.5, 'rgba(255,255,255,0.18)');
+          gS.addColorStop(0.6, 'rgba(255,255,255,0.05)');
+          gS.addColorStop(1,   'rgba(255,255,255,0)');
+          ctx.fillStyle = gS;
+          ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.fill();
+
+          ctx.restore();
+
+          // Soft radial edge glow
+          if (fillNow > 0.03 && fillNow < 0.97) {
+            var ex = cL + fw, ecy = cT + cH*0.5, eR = cH*0.60;
+            var ep = 0.30 + 0.22 * (0.5 + 0.5 * Math.sin(elapsed/1200*Math.PI*2));
+            var gE = ctx.createRadialGradient(ex, ecy, 0, ex, ecy, eR);
+            gE.addColorStop(0,   'rgba(255,255,255,' + ep + ')');
+            gE.addColorStop(0.4, 'rgba(0,230,118,' + ep*0.5 + ')');
+            gE.addColorStop(0.4, 'rgba(48,209,88,' + ep*0.5 + ')');
+            gE.addColorStop(1,   'rgba(48,209,88,0)');
+            ctx.beginPath(); ctx.arc(ex, ecy, eR, 0, Math.PI*2); ctx.fill();
+          }
+        }
+
+        // Border
+        ctx.strokeStyle = fillNow > 0.01 ? 'rgba(48,209,88,0.26)' : 'rgba(30,30,34,0.5)';
+        ctx.lineWidth = Math.max(1, cH * 0.024);
+        ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.stroke();
+
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
   </script>
 </body>
 </html>
+
+
+
+

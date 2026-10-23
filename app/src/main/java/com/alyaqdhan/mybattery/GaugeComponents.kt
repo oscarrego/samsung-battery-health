@@ -10,18 +10,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import java.util.Locale
+import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.PI
 
 @Composable
 fun HealthGaugeCard(
@@ -84,53 +92,35 @@ fun HealthGaugeCard(
             Modifier.fillMaxWidth().padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    "BATTERY HEALTH",
-                    color = tp,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.5.sp
-                    )
-                )
-                if (!isLoadingDetail && !isUnsupported && info.healthSource == "bsoh") {
+            // BSOH badge - only when applicable
+            if (!isLoadingDetail && !isUnsupported && info.healthSource == "bsoh") {
+                Box(Modifier.fillMaxWidth()) {
                     Text(
                         "BSOH",
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .background(
-                                Color(0xFF1E1E22),
-                                RoundedCornerShape(4.dp)
-                            )
+                            .background(Color(0xFF1E1E22), RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                         color = tp,
                         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp)
                     )
                 }
+                Spacer(Modifier.height(8.dp))
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            Box(Modifier.size(190.dp), contentAlignment = Alignment.Center) {
-                FullCircleAnimatedGauge(
-                    progress   = if (isUnsupported) 1f else animPct / 100f,
-                    isLoading  = isLoadingDetail,
-                    trackColor = Color(0xFF1E1E22),
-                    arcColor   = gaugeColor,
-                    modifier   = Modifier.fillMaxSize()
+            // Large percentage text
+            Text(
+                if (isLoadingDetail || isUnsupported) "--" else "${animPct.toInt()}%",
+                color = tp,
+                style = MaterialTheme.typography.displayMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1).sp
                 )
-                Text(
-                    if (isLoadingDetail || isUnsupported) "--" else "${animPct.toInt()}%",
-                    color = tp,
-                    style = MaterialTheme.typography.displayMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-1).sp
-                    )
-                )
-            }
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(14.dp))
 
+            // Health condition pill
             Surface(
                 shape  = RoundedCornerShape(10.dp),
                 color  = Color.Transparent,
@@ -143,124 +133,267 @@ fun HealthGaugeCard(
                     style    = MaterialTheme.typography.labelMedium
                 )
             }
+
+            Spacer(Modifier.height(22.dp))
+
+            // Liquid capsule gauge
+            CapsuleBatteryGauge(
+                progress   = if (isUnsupported) 1f else animPct / 100f,
+                isLoading  = isLoadingDetail,
+                trackColor = Color(0xFF1A1A1E),
+                fillColor  = gaugeColor,
+                modifier   = Modifier.fillMaxWidth().height(56.dp)
+            )
         }
     }
 }
 
 /**
- * Full 360-degree circular battery gauge with ongoing continuous animation.
- * Features:
- * - 360 full circular background track
- * - Clockwise green progress arc starting from 12 o'clock (-90 degrees)
- * - Ongoing continuous rotating sweep shimmer
- * - Ongoing traveling energy pulse along the active arc
- * - Subtle breathing glow with zero smudges or tip artifacts
+ * Liquid capsule battery gauge.
+ * Fill: red -> orange -> yellow -> green spectrum gradient (left to right).
+ * Right edge: single smooth S-curve that sways like a liquid meniscus.
+ * 3D volumetric glow, dot grid on unfilled area, shimmer sweep.
  */
 @Composable
-fun FullCircleAnimatedGauge(
+fun CapsuleBatteryGauge(
     progress: Float,
     isLoading: Boolean,
     trackColor: Color,
-    arcColor: Color,
+    fillColor: Color,   // used for outer glow colour only
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "gauge_ongoing")
+    val inf = rememberInfiniteTransition(label = "liq")
 
-    // Continuous smooth shimmer rotation along the circle
-    val shimmerRotation by infiniteTransition.animateFloat(
+    // Wave phase: drives the S-curve side to side (sloshing)
+    val wavePhase by inf.animateFloat(
         initialValue = 0f,
-        targetValue  = 360f,
+        targetValue  = (2f * PI).toFloat(),
         animationSpec = infiniteRepeatable(
-            animation  = tween(durationMillis = 3200, easing = LinearEasing),
+            animation  = tween(2600, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_rotation"
+        ), label = "wave"
     )
 
-    // Continuous traveling energy pulse along the active arc
-    val energyPulse by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue  = 1f,
+    // Outer glow pulse
+    val glowAlpha by inf.animateFloat(
+        initialValue = 0.06f, targetValue = 0.20f,
         animationSpec = infiniteRepeatable(
-            animation  = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "energy_pulse"
-    )
-
-    // Gentle breathing glow
-    val breathingAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.90f,
-        targetValue  = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
+            animation  = tween(1800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathing_glow"
+        ), label = "glow"
     )
+
+    // Shimmer sweep across fill
+    val shimmer by inf.animateFloat(
+        initialValue = -0.35f, targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "shim"
+    )
+
+    // Loading bounce
+    val loadProg by inf.animateFloat(
+        initialValue = 0.05f, targetValue = 0.65f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "load"
+    )
+
+    // Spectrum colour stops: red -> orange -> yellow -> green
+    val specRed    = Color(0xFFFF3B30)
+    val specOrange = Color(0xFFFF8C00)
+    val specYellow = Color(0xFFFFD60A)
+    val specGreen  = Color(0xFF30D158)
 
     Canvas(modifier = modifier) {
-        val strokeWidth = size.minDimension * 0.075f
-        val inset       = strokeWidth / 2f
-        val arcRect     = Rect(inset, inset, size.width - inset, size.height - inset)
-        val centerPoint = Offset(size.width / 2f, size.height / 2f)
+        val w = size.width; val h = size.height
+        val pad  = h * 0.10f
+        val cL   = pad;  val cT  = pad
+        val cW   = w - pad * 2f; val cH = h - pad * 2f
+        val cR   = cH / 2f
+        val capCR = CornerRadius(cR, cR)
 
-        // 1. Full 360 background track
-        drawArc(
-            color      = trackColor,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter  = false,
-            topLeft    = arcRect.topLeft,
-            size       = arcRect.size,
-            style      = Stroke(width = strokeWidth)
+        val fillFrac = (if (isLoading) loadProg else progress).coerceIn(0f, 1f)
+        val fw = cW * fillFrac
+
+        // -- 1. Outer glow --
+        if (fillFrac > 0.02f) {
+            val ge = h * 0.12f
+            drawRoundRect(
+                color        = fillColor.copy(alpha = glowAlpha),
+                topLeft      = Offset(cL - ge, cT - ge),
+                size         = Size(cW + ge * 2f, cH + ge * 2f),
+                cornerRadius = CornerRadius(cR + ge, cR + ge)
+            )
+        }
+
+        // -- 2. Dark track --
+        drawRoundRect(
+            color        = trackColor,
+            topLeft      = Offset(cL, cT),
+            size         = Size(cW, cH),
+            cornerRadius = capCR
         )
 
-        if (isLoading) {
-            // Spinning loading arc: pure green, no teal
-            drawArc(
-                color      = arcColor.copy(alpha = breathingAlpha),
-                startAngle = shimmerRotation,
-                sweepAngle = 100f,
-                useCenter  = false,
-                topLeft    = arcRect.topLeft,
-                size       = arcRect.size,
-                style      = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-        } else {
-            val clampedProgress = progress.coerceIn(0f, 1f)
-            val fullSweep = 360f * clampedProgress
-
-            if (fullSweep > 0f) {
-                // Solid arc using pure health color: no sweep gradient, no teal
-                drawArc(
-                    color      = arcColor.copy(alpha = 0.92f),
-                    startAngle = -90f,
-                    sweepAngle = fullSweep,
-                    useCenter  = false,
-                    topLeft    = arcRect.topLeft,
-                    size       = arcRect.size,
-                    style      = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                )
-
-                // Traveling bright highlight dot along the arc: pure white, sin fade
-                val pulseSweep = (fullSweep * 0.18f).coerceIn(12f, 40f)
-                val pulseStart = -90f + (fullSweep - pulseSweep) * energyPulse
-                val pulseFade  = sin(energyPulse * Math.PI.toFloat()).coerceIn(0f, 1f)
-
-                if (pulseFade > 0.05f) {
-                    drawArc(
-                        color      = Color.White.copy(alpha = 0.50f * pulseFade),
-                        startAngle = pulseStart,
-                        sweepAngle = pulseSweep,
-                        useCenter  = false,
-                        topLeft    = arcRect.topLeft,
-                        size       = arcRect.size,
-                        style      = Stroke(width = strokeWidth * 0.65f, cap = StrokeCap.Round)
+        // -- 3. Dot grid on ENTIRE track (subtle) --
+        val dotSp = cH * 0.195f; val dotR = cH * 0.019f
+        var dx = cL + dotSp
+        while (dx < cL + cW - dotR) {
+            var dy = cT + dotSp
+            while (dy < cT + cH - dotR) {
+                val rx = dx - cL; val ry = dy - cT
+                val minD = min(min(rx, cW - rx), min(ry, cH - ry))
+                if (minD > cR * 0.12f || (rx > cR && cW - rx > cR)) {
+                    drawCircle(
+                        color  = Color(0xFF444448).copy(alpha = 0.45f),
+                        radius = dotR,
+                        center = Offset(dx, dy)
                     )
                 }
+                dy += dotSp
+            }
+            dx += dotSp
+        }
+
+        // -- 4. Liquid fill with S-curve right edge --
+        if (fw > 1f) {
+
+            // Build the fill path:
+            //   top-left -> straight across top to fw -> S-curve wave DOWN the right edge
+            //   -> straight back along bottom -> close
+            val waveAmp = cH * 0.28f   // large amplitude = smooth visible S-curve
+            val steps   = 80
+
+            val fillPath = Path().apply {
+                moveTo(cL, cT)
+                lineTo(cL + fw, cT)            // top edge to fill boundary
+
+                // Single S-curve sine wave downward on the right edge
+                // sin(t*2PI + phase) gives one full S-cycle top-to-bottom
+                for (i in 0..steps) {
+                    val t  = i.toFloat() / steps
+                    val yp = cT + t * cH
+                    val xOff = sin(t * 2f * PI.toFloat() + wavePhase) * waveAmp
+                    lineTo(cL + fw + xOff, yp)
+                }
+
+                lineTo(cL, cT + cH)            // bottom-left
+                close()
+            }
+
+            // Capsule clip path
+            val clipPath = Path().apply {
+                addRoundRect(
+                    androidx.compose.ui.geometry.RoundRect(
+                        left = cL, top = cT,
+                        right = cL + cW, bottom = cT + cH,
+                        cornerRadius = capCR
+                    )
+                )
+            }
+
+            clipPath(clipPath) {
+
+                // Bright spectrum gradient fill
+                drawPath(
+                    path  = fillPath,
+                    brush = Brush.horizontalGradient(
+                        colorStops = arrayOf(
+                            0.00f to specRed,
+                            0.33f to specOrange,
+                            0.62f to specYellow,
+                            1.00f to specGreen
+                        ),
+                        startX = cL,
+                        endX   = cL + cW
+                    )
+                )
+
+                // 3D glass highlight - top half sheen
+                drawPath(
+                    path  = fillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.28f),
+                            Color.White.copy(alpha = 0.10f),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.18f)
+                        ),
+                        startY = cT,
+                        endY   = cT + cH
+                    )
+                )
+
+                // Volumetric inner glow - radial bright center
+                val glowCx = cL + fw * 0.55f
+                val glowCy = cT + cH * 0.50f
+                val glowR  = fw * 0.70f
+                if (glowR > 1f) {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.22f),
+                                Color.Transparent
+                            ),
+                            center = Offset(glowCx, glowCy),
+                            radius = glowR
+                        ),
+                        center = Offset(glowCx, glowCy),
+                        radius = glowR
+                    )
+                }
+
+                // Shimmer band
+                val shimW = cW * 0.20f
+                val shimX = cL + (cW + shimW) * shimmer - shimW
+                drawRoundRect(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.04f),
+                            Color.White.copy(alpha = 0.16f),
+                            Color.White.copy(alpha = 0.04f),
+                            Color.Transparent
+                        ),
+                        startX = shimX, endX = shimX + shimW
+                    ),
+                    topLeft      = Offset(cL, cT),
+                    size         = Size(cW, cH),
+                    cornerRadius = capCR
+                )
+            }
+
+            // Bright rim glow at the wave boundary (soft radial, no hard line)
+            if (fillFrac in 0.04f..0.96f) {
+                val ex = cL + fw
+                val eR = cH * 0.70f
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.40f),
+                            fillColor.copy(alpha = 0.20f),
+                            Color.Transparent
+                        ),
+                        center = Offset(ex, cT + cH / 2f),
+                        radius = eR
+                    ),
+                    center = Offset(ex, cT + cH / 2f),
+                    radius = eR
+                )
             }
         }
+
+        // -- 5. Capsule border --
+        drawRoundRect(
+            color        = if (fillFrac > 0.02f) fillColor.copy(alpha = 0.28f)
+                           else Color(0xFF2A2A30),
+            topLeft      = Offset(cL, cT),
+            size         = Size(cW, cH),
+            cornerRadius = capCR,
+            style        = Stroke(width = cH * 0.022f)
+        )
     }
 }
 
@@ -424,7 +557,7 @@ fun QuickBatteryInfoCard(
 
     val tempText = when {
         isLoading -> "--"
-        info.temperatureC != null -> String.format(Locale.US, "%.1f°C", info.temperatureC)
+        info.temperatureC != null -> String.format(Locale.US, "%.1fÂ°C", info.temperatureC)
         else -> "--"
     }
 
