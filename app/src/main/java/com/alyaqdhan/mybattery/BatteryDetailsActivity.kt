@@ -1,4 +1,4 @@
-package com.alyaqdhan.mybattery
+﻿package com.alyaqdhan.mybattery
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -383,7 +383,7 @@ private fun ElectricalReadingsSection(
             )
         }
 
-        val tempText = info.temperatureC?.let { String.format(Locale.US, "%.1f °C", it) } ?: "--"
+        val tempText = info.temperatureC?.let { String.format(Locale.US, "%.1f \u00B0C", it) } ?: "--"
         DetailRow(
             label = "Current Temperature",
             value = tempText,
@@ -407,7 +407,7 @@ private fun ElectricalReadingsSection(
             valueColor = tp
         )
 
-        val maxTempText = info.maxRecordedTempC?.let { String.format(Locale.US, "%.1f °C", it) } ?: "Not recorded"
+        val maxTempText = info.maxRecordedTempC?.let { String.format(Locale.US, "%.1f \u00B0C", it) } ?: "Not recorded"
         DetailRow(
             label = "Highest Recorded Temperature",
             value = maxTempText,

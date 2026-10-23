@@ -276,9 +276,9 @@ fun CapsuleBatteryGauge(
                     val t  = i.toFloat() / steps
                     val yp = cT + t * cH
                     val xOff = sin(t * 2f * PI.toFloat() + wavePhase) * waveAmp
-                    lineTo(cL + fw + xOff, yp)
+                    val xp   = (cL + fw + xOff).coerceIn(cL + 1f, cL + cW - 1f)
+                    lineTo(xp, yp)
                 }
-
                 lineTo(cL, cT + cH)            // bottom-left
                 close()
             }
@@ -559,7 +559,7 @@ fun QuickBatteryInfoCard(
 
     val tempText = when {
         isLoading -> "--"
-        info.temperatureC != null -> String.format(Locale.US, "%.1fÃ‚Â°C", info.temperatureC)
+        info.temperatureC != null -> String.format(Locale.US, "%.1f \u00B0C", info.temperatureC)
         else -> "--"
     }
 

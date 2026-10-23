@@ -965,7 +965,7 @@
           <!-- Section 1 -- Battery Health (Liquid Wave Capsule) -->
           <div class="card health-card">
 
-            <div class="gauge-percent">83%</div>
+            <div class="gauge-percent">93%</div>
             <div><span class="pill">Good condition</span></div>
             <div class="gauge-wrap">
               <div class="capsule-glow"></div>
@@ -980,7 +980,7 @@
                 <line x1="21" y1="10" x2="21" y2="14" stroke-width="2.5"/>
                 <path d="M10.5 8.5 L8.5 12 L11 12 L9.5 15.5 L12 11.5 L9.5 11.5 Z" fill="currentColor" stroke="none"/>
               </svg>
-              <span class="metric-card-value">83%</span>
+              <span class="metric-card-value">93%</span>
               <span class="metric-card-label">Charge</span>
             </div>
             <div class="metric-card">
@@ -988,7 +988,7 @@
                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
                 <circle cx="11.5" cy="17.5" r="2" fill="currentColor" stroke="none"/>
               </svg>
-              <span class="metric-card-value">29.5Â°C</span>
+              <span class="metric-card-value">29.5&#176;C</span>
               <span class="metric-card-label">Temperature</span>
             </div>
             <div class="metric-card">
@@ -1194,7 +1194,7 @@
                 <div class="detail-row-label">Current Temperature</div>
                 <div class="detail-row-sub">Internal thermistor sensor reading</div>
               </div>
-              <div class="detail-row-val">29.5 Â°C</div>
+              <div class="detail-row-val">29.5&#176;C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
@@ -1215,7 +1215,7 @@
                 <div class="detail-row-label">Highest Recorded Temperature</div>
                 <div class="detail-row-sub">mSavedBatteryMaxTemp hardware register</div>
               </div>
-              <div class="detail-row-val">44.8 Â°C</div>
+              <div class="detail-row-val">44.8&#176;C</div>
             </div>
             <div class="detail-row">
               <div class="detail-row-left">
@@ -1661,7 +1661,7 @@
           this.closePath(); return this;
         };
       }
-      var FILL = 0.83;
+      var FILL = 0.93;
       var startTime = null;
       var dpr = window.devicePixelRatio || 1;
 
@@ -1742,8 +1742,8 @@
             var t  = i / STEPS;
             var yp = cT + t * cH;
             var x1 = Math.sin(t * 2.0 * Math.PI + p1);
-            var xp = cL + fw + x1 * amp;
-
+            var x1 = Math.sin(t * 2.0 * Math.PI + p1);
+            var xp = Math.min(cL + cW - 1, Math.max(cL + 1, cL + fw + x1 * amp));
             ctx.lineTo(xp, yp);
           }
 
