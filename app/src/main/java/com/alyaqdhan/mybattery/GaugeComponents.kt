@@ -263,7 +263,7 @@ fun CapsuleBatteryGauge(
             // Build the fill path:
             //   top-left -> straight across top to fw -> S-curve wave DOWN the right edge
             //   -> straight back along bottom -> close
-            val waveAmp = cH * 0.28f   // large amplitude = smooth visible S-curve
+            val waveAmp = cH * 0.16f   // subtle but visible liquid S-curve
             val steps   = 80
 
             val fillPath = Path().apply {
