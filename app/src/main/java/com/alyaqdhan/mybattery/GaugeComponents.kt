@@ -386,14 +386,14 @@ fun CapsuleBatteryGauge(
         }
 
 
-        // -- 5. Capsule border -- thick white, inset so stroke sits on the edge
+        // -- 5. Capsule border -- thick white, same coords as capsule
         val strokeW = cH * 0.055f
-        val half    = strokeW / 2f
+
         drawRoundRect(
-            color        = Color.White.copy(alpha = 0.55f),
-            topLeft      = Offset(cL + half, cT + half),
-            size         = Size(cW - strokeW, cH - strokeW),
-            cornerRadius = CornerRadius(cR - half, cR - half),
+            color        = Color.White.copy(alpha = 0.60f),
+            topLeft      = Offset(cL, cT),
+            size         = Size(cW, cH),
+            cornerRadius = capCR,
             style        = Stroke(width = strokeW)
         )
 

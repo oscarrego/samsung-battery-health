@@ -1783,12 +1783,12 @@
 
         }
 
-        // Border - thick white, inset by half stroke so it aligns to capsule edge
+        // Border - thick white, centered on capsule edge
         var bSW = Math.max(2, cH * 0.055);
-        var bH  = bSW / 2;
-        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.strokeStyle = "rgba(255,255,255,0.60)";
         ctx.lineWidth = bSW;
-        ctx.beginPath(); ctx.roundRect(cL + bH, cT + bH, cW - bSW, cH - bSW, Math.max(1, cR - bH)); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(cL, cT, cW, cH, cR); ctx.stroke();
+
       }
       requestAnimationFrame(frame);
     })();
